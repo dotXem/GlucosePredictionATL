@@ -1,21 +1,24 @@
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
-from tools.pytorch.early_stopping import EarlyStopping
+from training.pytorch.early_stopping import EarlyStopping
 from tools.printd import printd
 
-
 def loss_batch(model, loss_func, xb, yb, opt=None):
-    # loss = loss_func(model(xb), yb)
-    loss, mse, nll = loss_func(model(xb), yb)
+    if loss_func.__class__.__name__ == "DALoss":
+        loss, mse, nll = loss_func(model(xb), yb)
+    else:
+        loss = loss_func(model(xb), yb)
 
     if opt is not None:
         loss.backward()
         opt.step()
         opt.zero_grad()
 
-    return loss.item(), mse.item(), nll.item(), len(xb)
-    # return loss.item(), len(xb)
+    if loss_func.__class__.__name__ == "DALoss":
+        return loss.item(), mse.item(), nll.item(), len(xb)
+    else:
+        return loss.item(), len(xb)
 
 
 def eval_loss_batch(model, loss_func, xb, yb, opt=None):
@@ -57,23 +60,27 @@ def evaluate(epoch, early_stopping, model, loss_func, dls):
     with torch.no_grad():
         loss = []
         for dl, name in zip(dls, dls_names):
-            import torch.nn as nn
             # losses, nums = zip(*[loss_batch(model, loss_func, xb, yb) for xb, yb in dl])
             # loss_dl = np.sum(np.multiply(losses, nums)) / np.sum(nums)
             # loss.append(loss_dl)
             #
             # if name == "[valid]":
             #     early_stopping(loss_dl, model, epoch)
+            if loss_func.__class__.__name__ == "DALoss":
+                losses, mse, nll, nums = zip(*[loss_batch(model, loss_func, xb, yb) for xb, yb in dl])
+                sum = np.sum(nums)
+                loss_dl = [np.sum(np.multiply(losses, nums)) / sum, np.sum(np.multiply(mse, nums)) / sum,
+                           np.sum(np.multiply(nll, nums)) / sum]
+                es_loss = loss_dl[1]
+            else:
+                losses, nums = zip(*[loss_batch(model, loss_func, xb, yb) for xb, yb in dl])
+                loss_dl = np.sum(np.multiply(losses, nums)) / np.sum(nums)
+                es_loss = loss_dl
 
-            losses, mse, nll, nums = zip(*[loss_batch(model, loss_func, xb, yb) for xb, yb in dl])
-
-            sum = np.sum(nums)
-            loss_dl = [np.sum(np.multiply(losses, nums)) / sum, np.sum(np.multiply(mse, nums)) / sum,
-                       np.sum(np.multiply(nll, nums)) / sum]
             loss.append(loss_dl)
 
             if name == "[valid]":
-                early_stopping(loss_dl[1], model, epoch)
+                early_stopping(es_loss, model, epoch)
 
     res = np.r_[epoch, np.c_[dls_names, loss].ravel()]
     printd(*res)

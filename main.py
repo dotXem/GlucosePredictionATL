@@ -7,6 +7,7 @@ from preprocessing.preprocessing import source_preprocessing, target_preprocessi
 from postprocessing.postprocessing import source_postprocessing, target_postprocessing
 from evaluation.results import ResultsSource, ResultsTarget
 from tools.printd import printd
+from tools.domain2domain import domain_2_domain_str
 
 
 def main_source(source_dataset, target_dataset, target_subject, Model, params, eval, split, save_file):
@@ -25,26 +26,79 @@ def main_source(source_dataset, target_dataset, target_subject, Model, params, e
         results.append(source_postprocessing(y_true, y_pred, means, stds))
 
         if save_file is not None:
-            model.save_encoder_predictor(os.path.join(save_file, "_", str(split_number)))
+            file = os.path.join(domain_2_domain_str(source_dataset, target_dataset), save_file,
+                                target_dataset + target_subject + "_" + str(split_number))
+            model.save_encoder_regressor(file)
 
-    results = ResultsSource(save_file, source_dataset, target_dataset, target_subject, freq, results=results)
+    # save_file = os.path.join(save_file, "pretraining")
+    results = ResultsSource(save_file, source_dataset, target_dataset, target_subject, model_name,
+                            results=results)
     printd(results.get_results())
 
     if save_file is not None:
         results.save()
 
 
-def main_target(target_dataset, target_subject, Model, params, mode, pretraining, split, eval, save, plot):
-    pass
+def main_target(mode, source_dataset, target_dataset, target_subject, Model, params, weights_dir, eval, split,
+                save_file, plot):
+    data = target_preprocessing(target_dataset, target_subject)
+
+    splits = [split] if split is not None else range(cv * (cv - 1))
+    results = []
+    for split_number in splits:
+        train, valid, test, means, stds = data.get_split(split_number)
+
+        if mode in ["target_global", "target_finetuning"] and weights_dir is not None:
+            weights_files = [os.path.join(domain_2_domain_str(source_dataset, target_dataset), weights_dir,
+                                          Model.__name__ + "_" + target_dataset + target_subject + "_" + str(
+                                              split) + ".pt") for split in range(cv)]
+        else:
+            weights_files = [None]
+
+        for weights_file in weights_files:
+
+            model = Model(params)
+            if weights_file is not None: model.load_weights_from_file(weights_file)
+
+            if not mode == "target_global":
+                model.fit(*train, *valid)
+
+            y_true, y_pred = model.predict(*test) if eval == "test" else model.predict(*valid)
+
+            results.append(target_postprocessing(y_true, y_pred, means, stds))
+
+    if mode == "target_global":
+        suffix = "global"
+    elif mode == "target_training":
+        suffix = "training"
+    elif mode == "target_finetuning":
+        suffix = "finetuning"
+    # save_file = os.path.join(save_file, suffix)
+    save_file = save_file + "_" + suffix
+
+    results = ResultsTarget(save_file, source_dataset, target_dataset, target_subject, model_name,
+                            results=results)
+    printd(results.get_results())
+
+    if save_file is not None: results.save()
+
+    printd(ResultsTarget(save_file, source_dataset, target_dataset, target_subject, model_name).get_results())
+
+    if plot is not None and plot: results.plot()
 
 
 if __name__ == "__main__":
     """
+        --mode=source_training --source_dataset=IDIAB --target_dataset=IDIAB --target_subject=1 --model=DAFCN --eval=valid --save=test
+        --mode=target_global --source_dataset=IDIAB --target_dataset=IDIAB --target_subject=1 --model=FCN --eval=valid --weights=test --save=test
+        --mode=target_finetuning --source_dataset=IDIAB --target_dataset=IDIAB --target_subject=1 --model=FCN --eval=valid --weights=test --save=test
+        --mode=target_training --source_dataset=IDIAB --target_dataset=IDIAB --target_subject=1 --model=FCN --eval=valid --save=test
+    
         --mode: 4 modes 
                 "source_training":      train a model on source dataset minus the target subject
                 "target_training":      train a model on the target subject only
                 "target_global":        use a model trained with the "source_training" mode to make the prediction for the 
-                                        target subject. --pretraining_file must be set.
+                                        target subject. --weights_file must be set.
                 "target_finetuning":    finetune a model trained with the "source_training" mode on the target subject
         --source_dataset:
                 dataset used in the "source_training" mode, can be either "IDIAB", "Ohio" or "all"
@@ -52,7 +106,7 @@ if __name__ == "__main__":
                 specify the subject used in the "target_X" modes and removed from the "source_training" if needed
         --model:
                 specify the model used in all the modes
-        --pretraining:
+        --weights:
                 specify the files to be used in the "target_global" and "target_finetuning" modes
         --eval:
                 specify the evaluation set to be used, in the "target_X" modes, either "valid" or "test". default:
@@ -74,7 +128,7 @@ if __name__ == "__main__":
     parser.add_argument("--target_dataset", type=str)
     parser.add_argument("--target_subject", type=str)
     parser.add_argument("--model", type=str)
-    parser.add_argument("--pretraining", type=str)
+    parser.add_argument("--weights", type=str)
     parser.add_argument("--eval", type=str)
     parser.add_argument("--split", type=int)
     parser.add_argument("--log", type=str)
@@ -92,33 +146,17 @@ if __name__ == "__main__":
         log_path = os.path.join(path, "logs", log_file)
         sys.stdout = open(log_path, "w")
 
+    # create save directories
+    if args.save_file is not None:
+        dir = os.path.join(path, "models", "weights", domain_2_domain_str(args.source_dataset, args.target_dataset),
+                           args.save_file)
+        if not os.path.exists(dir): os.makedirs(dir)
+        # os.makedirs(os.path.join(path, "results", args.save))
+
     if args.mode == "source_training":
         main_source(args.source_dataset, args.target_dataset, args.target_subject, Model, params, args.eval, args.split,
                     args.save_file)
     elif args.mode in ["target_training", "target_global", "target_finetuning"]:
-        pass
-
-    #
-    # def compute_domain2domain_name(pool, dataset):
-    #     return pool + "_2_" + dataset
-    #
-    #
-    # d2d_name = compute_domain2domain_name(args.pool, args.dataset)
-    #
-    #
-    # save = args.save if args.save is not None else False
-    #
-    # model_name = args.model if args.model is not None else sys.exit(-1)
-    # Model = locate("models.features_extractors." + model_name + "." + model_name)
-    # params = locate("models.features_extractors." + model_name + ".params")
-    #
-    # files_dir = args.files_dir if args.files_dir is not None else "test"
-    # files_dir = os.path.join(d2d_name, files_dir)
-    #
-    # main_fine_tuning(dataset_name=args.dataset,
-    #                  subject_name=args.subject,
-    #                  Model=Model,
-    #                  params=params,
-    #                  files_dir=files_dir,
-    #                  split_number=args.split,
-    #                  save=save)
+        main_target(args.mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
+                    args.weights, args.eval,
+                    args.split, args.save_file, args.plot)

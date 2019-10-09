@@ -8,7 +8,7 @@ def _x_y_split(data, index):
 def _reshape_data_into_days(data):
     n_days = len(data.index) // day_len_freq
     days = [
-        data.ix[d * day_len_freq:(d + 1) * day_len_freq - 1, ["glucose", "insulin", "CHO"]].reset_index(
+        data.iloc[d * day_len_freq:(d + 1) * day_len_freq, [1,2,3]].reset_index(
             drop=True)
         for d in range(n_days)
     ]
@@ -20,7 +20,7 @@ def _create_samples(data):
     for day in data:
         # create the samples by adding the past values accounting for the amount of history
         X = np.array([
-            day.ix[j: j + day_len_freq - hist_freq - 1, ["glucose", "insulin", "CHO"]].values for j in
+            day.iloc[j: j + day_len_freq - hist_freq].values for j in
             range(hist_freq)
         ])
         y_pred = X[-1, ph_freq:, 0].reshape(-1, 1)
