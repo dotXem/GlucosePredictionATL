@@ -9,7 +9,7 @@ import numpy as np
 import openpyxl
 from evaluation.r import r
 from evaluation.fit import fit
-from evaluation.time_lag import time_lag, diabetes_time_lag
+from evaluation.time_lag import time_lag
 from evaluation.mape import MAPE
 import pickle
 import misc
@@ -20,33 +20,27 @@ class ResultsTargetAnalyzer():
     """
         ResultsAnalyzer object that instiate results objects for a given population and compute the overall
         results.
-        Parameters:
-            - model_name: name of the model (e.g., "ELM")
-            - ph: prediciton horizon (e.g., 30)
-            - freq: sampling frequency (e.g., 5)
     """
 
-    def __init__(self, model_name, ph, freq=misc.freq):
-        self.ph = ph
+    def __init__(self, source_dataset, target_dataset, model_name, exp_name, freq=misc.freq):
         self.model_name = model_name
         self.freq = freq
+        self.source_dataset = source_dataset
+        self.target_dataset = target_dataset
+        self.exp_name = exp_name
 
-    def analyze(self, dataset="all", subject="all", details=False):
+    def analyze(self, subject="all", details=False):
         """
             Compute the overall results of the given population
-            :param dataset: name of the dataset, supports "all"
             :param subject: name of the subject, supports "all"
             :return: dict of mean results accros population, dict of std results accros population
         """
-        datasets_subjects = compute_subjects_list(dataset, subject)
+        datasets_subjects = compute_subjects_list(self.target_dataset, subject)
 
         res_list = []
         for dataset, subject in datasets_subjects:
             # load results
-            file_name = "ph" + str(self.ph) + "_" + dataset + subject + "_" + self.model_name + "_.res"
-            file_path = os.path.join(os.path.dirname(__file__), "..", "results", "ph" + str(self.ph), self.model_name,
-                                     file_name)
-            res = ResultsTarget(self.model_name, self.ph, dataset, subject, self.freq, file=file_path)
+            res = ResultsTarget(self.exp_name, self.source_dataset, self.target_dataset, subject, self.model_name)
 
             # get and store results
             res_list.append(res.get_results())

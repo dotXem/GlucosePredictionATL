@@ -30,8 +30,9 @@ def main_source(source_dataset, target_dataset, target_subject, Model, params, e
                                 target_dataset + target_subject + "_" + str(split_number))
             model.save_encoder_regressor(file)
 
-    # save_file = os.path.join(save_file, "pretraining")
-    results = ResultsSource(save_file, source_dataset, target_dataset, target_subject, model_name,
+        model.clear_checkpoint()
+
+    results = ResultsSource(save_file, source_dataset, target_dataset, target_subject, Model.__name__,
                             results=results)
     printd(results.get_results())
 
@@ -67,22 +68,21 @@ def main_target(mode, source_dataset, target_dataset, target_subject, Model, par
 
             results.append(target_postprocessing(y_true, y_pred, means, stds))
 
+            model.clear_checkpoint()
+
     if mode == "target_global":
         suffix = "global"
     elif mode == "target_training":
         suffix = "training"
     elif mode == "target_finetuning":
         suffix = "finetuning"
-    # save_file = os.path.join(save_file, suffix)
     save_file = save_file + "_" + suffix
 
-    results = ResultsTarget(save_file, source_dataset, target_dataset, target_subject, model_name,
+    results = ResultsTarget(save_file, source_dataset, target_dataset, target_subject, Model.__name__,
                             results=results)
     printd(results.get_results())
 
     if save_file is not None: results.save()
-
-    printd(ResultsTarget(save_file, source_dataset, target_dataset, target_subject, model_name).get_results())
 
     if plot is not None and plot: results.plot()
 
@@ -158,5 +158,4 @@ if __name__ == "__main__":
                     args.save_file)
     elif args.mode in ["target_training", "target_global", "target_finetuning"]:
         main_target(args.mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
-                    args.weights, args.eval,
-                    args.split, args.save_file, args.plot)
+                    args.weights, args.eval, args.split, args.save_file, args.plot)

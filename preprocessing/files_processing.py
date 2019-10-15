@@ -24,20 +24,21 @@ def _compute_subject_full_name(dataset_name, subject_name):
     return dataset_name + "_subject" + subject_name
 
 
-def _remove_subject_from_pool(pool_dataset, dataset_name, subject_name):
-    subject_files = _select_pool_files(pool_dataset)
-    subject_full_name = _compute_subject_full_name(dataset_name, subject_name)
+def _remove_subject_from_pool(source_dataset, target_dataset, target_subject):
+    subject_files = _select_pool_files(source_dataset)
+    subject_full_name = _compute_subject_full_name(target_dataset, target_subject)
     for file in subject_files:
         if subject_full_name in file:
             subject_files.remove(file)
             return subject_files
+    return subject_files
 
-def _select_pool_files(pool_dataset):
-    if pool_dataset == "IDIAB":
+def _select_pool_files(source_dataset):
+    if source_dataset == "IDIAB":
         return idiab_files
-    elif pool_dataset == "Ohio":
+    elif source_dataset == "Ohio":
         return ohio_files
-    elif pool_dataset == "all":
+    elif source_dataset == "all":
         return idiab_files + ohio_files
 
 

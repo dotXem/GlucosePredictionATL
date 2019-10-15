@@ -11,4 +11,4 @@ def compute_weights_path(file_name):
 
 def compute_checkpoint_file_name(model):
     return datetime.now().strftime("%Y_%m_%d_%H_%M") + "_" + model.__class__.__name__ + "_" + str(
-                np.random.randint(100)) + ".pt"
+                np.random.randint(10000)) + ".pt"

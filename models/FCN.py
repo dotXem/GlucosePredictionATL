@@ -1,8 +1,8 @@
+import os
 import torch
 from torch.utils.data import TensorDataset
 from torch import Tensor
 from training.pytorch.training import fit, predict
-from misc import hist_freq
 from models.tools.fcn_submodules import *
 from models.tools.files import compute_checkpoint_file_name, compute_checkpoint_path, compute_weights_path
 
@@ -11,18 +11,18 @@ params = {
 
     "encoder_channels": [64, 128, 64],
     "encoder_kernel_sizes": [3, 3, 3],
-    "encoder_dropout": 0.5,
+    "encoder_dropout": 0.9,
 
     "decoder_channels": [2048],
-    "decoder_dropout": 0.5,
+    "decoder_dropout": 0.9,
 
     # training
-    "epochs": 2,
+    "epochs": 5000,
     "bs": 100,
-    "lr": 1e-4,  # 1e-3
+    "lr": 1e-4,
     "patience": 50,
 
-    "l2": 0.0,  # 1e-2,
+    "l2": 0.0,
 
     "checkpoint": None,
 }
@@ -61,13 +61,7 @@ class FCN():
             patience=self.params["patience"],
             checkpoint_file=self.checkpoint_file)
 
-    # def predict(self, x, y, file=None):
     def predict(self, x, y):
-        # if file is None:
-        #     self.model.load_state_dict(torch.load(self.checkpoint_file))
-        # else:
-        #     self.model.load_state_dict(torch.load(file))
-
         self.model.load_state_dict(torch.load(self.checkpoint_file))
 
         ds = self._reshape_and_create_tensor(x, y)
@@ -76,16 +70,20 @@ class FCN():
 
         return np.array(y_trues).reshape(-1, 1), np.array(y_preds).reshape(-1, 1)
 
+    def extract_features(self, x, y):
+        x, _ = self._reshape_x_y(x, y)
+
+        self.model.eval()
+
+        features = self.model.encoder(Tensor(x).cuda()).detach().cpu().numpy()
+        features = features.reshape(features.shape[0], -1)
+
+        return [features, y]
+
     def load_weights_from_file(self, file_name):
         path = compute_weights_path(file_name)
         self.model.load_state_dict(torch.load(path))
         torch.save(self.model.state_dict(), self.checkpoint_file)
-
-    # def load_encoder_weights(self, encoder_weights):
-    #     torch.save(self.model.state_dict(), self.checkpoint_file)
-    #
-    # def load_regressor_weights(self, regressor_weights):
-    #     torch.save(self.model.state_dict(), self.checkpoint_file)
 
     def load_weights(self, encoder_weights, regressor_weights):
         self.model.encoder.load_state_dict(encoder_weights)
@@ -112,6 +110,10 @@ class FCN():
     def _reshape_and_create_tensor(self, x, y):
         x, y = self._reshape_x_y(x, y)
         return TensorDataset(Tensor(x).cuda(), Tensor(y).cuda())
+
+
+    def clear_checkpoint(self):
+        os.remove(self.checkpoint_file)
 
 
 class FCN_Module(nn.Module):
