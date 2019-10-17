@@ -106,7 +106,7 @@ class DAFCN():
         torch.save(self.model.state_dict(), compute_checkpoint_path(file_name))
 
     def save_encoder_regressor(self, file_name):
-        """ Save a FCN model based on the encoder/regressor part of DAFCN """
+        """ Save a lambda0 model based on the encoder/regressor part of DAFCN """
         fcn_params = params.copy()
         del fcn_params["lambda"]
         del fcn_params["n_domains"]

@@ -7,7 +7,7 @@ def batch_main():
     target_subjects = ["1","2","3","4","5"]
     model, params = FCN, fcn_params
     eval = "valid"
-    weights = "lambda017_noL2_lr4"
+    weights = "lambda017"
     save = "lambda017_noL2_lr4_valid"
     mode = "target_global"
 
