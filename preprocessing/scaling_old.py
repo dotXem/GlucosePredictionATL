@@ -1,6 +1,4 @@
-import pandas as pd
 import numpy as np
-import misc
 
 
 def _standardize(train, other, mean_l, std_l):
@@ -29,7 +27,7 @@ def _standardize_pool(train, other):
 
 
 def _per_subject_standardization(train, valid):
-    train, valid = [np.rollaxis(set,1,0) for set in [train, valid]]
+    train, valid = [np.transpose(set, (1, 0)) for set in [train, valid]]
 
     data = [_standardize_pool(train_sbj, [valid_sbj])
             for train_sbj, valid_sbj in zip(train, valid)]
@@ -63,40 +61,3 @@ def standardize_features(train, other):
     std_sets = [reshape_features_back(set) for set in [train, *other]]
 
     return std_sets
-
-
-def _T1DMS_scaling(data):
-    # scale insulin from pmol to unit
-    data.loc[:, "insulin"] = data.loc[:, "insulin"] / 6000.0
-
-    # accumulate the CHO intakes
-    CHO_indexes = data[np.invert(data.loc[:, "CHO"] == 0.0)].index
-    meals, meal, start_idx, past_idx = [], data.loc[CHO_indexes[0],"CHO"], CHO_indexes[0], CHO_indexes[0]
-    for idx in CHO_indexes[1:]:
-        if idx == past_idx+1:
-            meal = meal + data.loc[idx, "CHO"]
-        else:
-            meals.append([start_idx, meal])
-            meal = data.loc[idx, "CHO"]
-            start_idx = idx
-        past_idx = idx
-    meals.append([start_idx, meal])
-    meals = np.array(meals)
-
-    data.loc[:, "CHO"] = 0.0
-    data.loc[meals[:,0],"CHO"] = meals[:,1]
-
-    # resample 5 minutes
-    data["datetime"] = pd.to_datetime(data["datetime"])
-    resampler = data.resample("5min", on="datetime")
-
-    data_resampled = pd.DataFrame()
-    data_resampled["datetime"] = resampler["glucose"].mean().index
-    data_resampled["glucose"] = resampler["glucose"].mean().values
-    data_resampled["insulin"] = resampler["insulin"].sum().values
-    data_resampled["CHO"] = resampler["CHO"].sum().values
-
-    # discard first day of simulation
-    data_resampled = data_resampled.loc[misc.day_len_freq:]
-
-    return data_resampled

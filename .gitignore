@@ -1,8 +1,9 @@
 data/
 venv/
 .idea/
-data/
+data_old/
 results/
+results_old/
 tmp/
 
 # Byte-compiled / optimized / DLL files

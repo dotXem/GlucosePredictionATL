@@ -21,6 +21,17 @@ def loss_batch(model, loss_func, xb, yb, opt=None):
         return loss.item(), len(xb)
 
 
+def eval_loss_batch(model, loss_func, xb, yb, opt=None):
+    loss = loss_func(model(xb)[0], yb[:, 0].unsqueeze(dim=1))
+
+    if opt is not None:
+        loss.backward()
+        opt.step()
+        opt.zero_grad()
+
+    return loss.item(), len(xb)
+
+
 def fit(epochs, batch_size, model, loss_func, opt, train_ds, valid_ds, patience, checkpoint_file):
     train_dl, valid_dl = create_dataloaders_from_datasets(train_ds, valid_ds, batch_size)
 
@@ -49,6 +60,12 @@ def evaluate(epoch, early_stopping, model, loss_func, dls):
     with torch.no_grad():
         loss = []
         for dl, name in zip(dls, dls_names):
+            # losses, nums = zip(*[loss_batch(model, loss_func, xb, yb) for xb, yb in dl])
+            # loss_dl = np.sum(np.multiply(losses, nums)) / np.sum(nums)
+            # loss.append(loss_dl)
+            #
+            # if name == "[valid]":
+            #     early_stopping(loss_dl, model, epoch)
             if loss_func.__class__.__name__ == "DALoss":
                 losses, mse, nll, nums = zip(*[loss_batch(model, loss_func, xb, yb) for xb, yb in dl])
                 sum = np.sum(nums)
@@ -72,9 +89,13 @@ def evaluate(epoch, early_stopping, model, loss_func, dls):
 
 
 def predict(model, ds):
+    # TODO check rework with predict in DANN_FCN.py
     model.eval()
     dl = DataLoader(ds, batch_size=len(ds))
 
+    # trues = dl.dataset.tensors[1].cpu().numpy()
+    # trues = cuda2np([dl.dataset.tensors[1]])
+    # preds = model(dl.dataset.tensors[0]).cpu().detach().numpy()
     preds = cuda2np(model(dl.dataset.tensors[0]))
 
 

@@ -47,7 +47,7 @@ def _merge_pool_subjects(data):
 
 
 def _per_subject_merge_days(data):
-    return np.array([[np.concatenate(subject, axis=0) for subject in split] for split in data])
+    return [[np.concatenate(subject, axis=0) for subject in split] for split in data]
 
 
 def _dann_add_domains(data):
@@ -58,4 +58,3 @@ def _dann_add_domains(data):
     data = [[add_domain(subject, domain) for subject, domain in zip(split, np.arange(len(split)))] for split in data]
 
     return data
-

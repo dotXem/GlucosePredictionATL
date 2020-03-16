@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import TensorDataset
 from torch import Tensor
 from training.pytorch.training import fit, predict
+from misc import hist_freq
 from models.tools.fcn_submodules import *
 from models.tools.files import compute_checkpoint_file_name, compute_checkpoint_path, compute_weights_path
 
@@ -11,18 +12,18 @@ params = {
 
     "encoder_channels": [64, 128, 64],
     "encoder_kernel_sizes": [3, 3, 3],
-    "encoder_dropout": 0.9,
+    "encoder_dropout": 0.5,
 
     "decoder_channels": [2048],
-    "decoder_dropout": 0.9,
+    "decoder_dropout": 0.5,
 
     # training
-    "epochs": 5000,
+    "epochs": 50000,
     "bs": 100,
-    "lr": 1e-4,
+    "lr": 1e-5,  # 1e-3
     "patience": 50,
 
-    "l2": 0.0,
+    "l2": 0.0,  # 1e-2,
 
     "checkpoint": None,
 }
@@ -62,6 +63,7 @@ class FCN():
             checkpoint_file=self.checkpoint_file)
 
     def predict(self, x, y):
+
         self.model.load_state_dict(torch.load(self.checkpoint_file))
 
         ds = self._reshape_and_create_tensor(x, y)

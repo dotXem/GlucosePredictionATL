@@ -5,7 +5,7 @@ day_len = 1440
 cv = 4
 seed = 0
 
-path = "."
+path = "./GlucosePredictionATL/"
 
 datasets_subjects_dict = {
     "IDIAB": ["1", "2", "3", "4", "5"],

@@ -6,7 +6,7 @@ from preprocessing.formatting import _reshape_data_into_days, _merge_days, _merg
     _per_subject_merge_days, _create_samples, _dann_add_domains, _x_y_split
 from preprocessing.cross_validation import _per_subject_split, _split_train_valid, _split_train_valid_test
 from preprocessing.data import Data
-from preprocessing.scaling import _per_subject_standardization, _standardize_pool, _T1DMS_scaling
+from preprocessing.scaling import _per_subject_standardization, _standardize_pool
 
 
 def preprocessing(source_dataset, target_dataset, target_subject):
@@ -43,8 +43,6 @@ def target_preprocessing(target_dataset, target_subject):
 
 def _global_preprocessing(file):
     data = _load_data(file)
-    if "T1DMS" in file:
-        data = _T1DMS_scaling(data)
     data = _reshape_data_into_days(data)
     data = _create_samples(data)
     return data
@@ -52,4 +50,3 @@ def _global_preprocessing(file):
 
 def _load_data(file):
     return pd.read_csv(file)
-

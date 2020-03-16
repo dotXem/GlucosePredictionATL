@@ -22,15 +22,15 @@ params = {
     "decoder_channels": [2048],
     "decoder_dropout": 0.5,
 
-    "epochs": 500,
+    "epochs": 5000,
     "bs": 100,
     "lr": 1e-4,
     "patience": 250,
 
-    "l2": 0.0,  # 1e-2,
+    "l2": 0.0,#1e-2,
 
-    "lambda": 0.17,
-    "n_domains": 4,
+    "lambda": 10**(-0.75),
+    "n_domains": 20,
 
     "checkpoint": None,
 }
@@ -80,39 +80,50 @@ class DAFCN():
 
         [y_trues_glucose, y_trues_subject], [y_preds_glucose, y_preds_subject] = predict(self.model, ds)
 
-        y_trues_glucose, y_preds_glucose = [_.reshape(-1, 1) for _ in [y_trues_glucose, y_preds_glucose]]
-        y_trues_subject = y_trues_subject.reshape(-1, 1)
-        y_preds_subject = np.argmax(y_preds_subject, axis=1).reshape(-1, 1)
+        y_trues_glucose, y_preds_glucose = [_.reshape(-1,1) for _ in [y_trues_glucose, y_preds_glucose]]
+        y_trues_subject = y_trues_subject.reshape(-1,1)
+        y_preds_subject = np.argmax(y_preds_subject,axis=1).reshape(-1,1)
 
         return np.c_[y_trues_glucose, y_trues_subject], np.c_[y_preds_glucose, y_preds_subject]
 
-    def extract_features(self, x, y):
-        x, _ = self._reshape_x_y(x, y)
-
-        self.model.eval()
-
-        features = self.model.encoder(Tensor(x).cuda()).detach().cpu().numpy()
-        features = features.reshape(features.shape[0], -1)
-
-        return [features, y]
+    # def extract_features(self, x, y):
+    #     x, _ = self._reshape_x_y(x, y)
+    #
+    #     self.model.eval()
+    #     features = self.model.encoder(Tensor(x).cuda()).detach().cpu().numpy()
+    #     features = features.reshape(features.shape[0], -1)
+    #
+    #     return [features, y]
+    #
+    # def freeze_features_extractor(self):
+    #     for param in self.model.encoder.parameters():
+    #         param.requires_grad_(False)
+    #
+    #     self.model.encoder.eval()
+    #     self.opt = torch.optim.Adam(self.model.parameters(), lr=self.params["lr"], weight_decay=self.params["l2"])
 
     def load_weights_from_file(self, file_name):
+    # def load_weights_from_file(self, full_file_name):
+
         path = compute_weights_path(file_name)
         self.model.load_state_dict(torch.load(path))
         torch.save(self.model.state_dict(), self.checkpoint_file)
+        # self.model.load_state_dict(torch.load(full_file_name))
 
     def save_weights(self, file_name):
         self.model.load_state_dict(torch.load(self.checkpoint_file))
         torch.save(self.model.state_dict(), compute_checkpoint_path(file_name))
 
     def save_encoder_regressor(self, file_name):
-        """ Save a lambda0 model based on the encoder/regressor part of DAFCN """
+        """ Save a FCN model based on the encoder/regressor part of DAFCN """
         fcn_params = params.copy()
         del fcn_params["lambda"]
         del fcn_params["n_domains"]
 
         fcn = FCN(fcn_params)
         fcn.load_weights(self.model.encoder.state_dict(), self.model.regressor.state_dict())
+        # fcn.load_encoder_weights(self.model.encoder.state_dict())
+        # fcn.load_regressor_weights(self.model.regressor.state_dict())
 
         file_name = file_name.split(os.sep)
         file_name[-1] = fcn.__class__.__name__ + "_" + file_name[-1] + ".pt"
@@ -139,7 +150,6 @@ class DAFCN():
 
     def clear_checkpoint(self):
         os.remove(self.checkpoint_file)
-
 
 class DANN_FCN_Module(nn.Module):
     def __init__(self, n_in, encoder_channels, encoder_kernel_sizes, encoder_dropout, decoder_channels,
@@ -183,3 +193,4 @@ class DALoss(nn.Module):
         nll = self.nll(domain_preds, domain_trues)
 
         return mse + self.lambda_ * nll, mse, nll
+        # return mse, mse, nll

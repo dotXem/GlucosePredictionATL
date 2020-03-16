@@ -6,9 +6,9 @@ def batch_main():
     target_dataset = "IDIAB"
     target_subjects = ["1","2","3","4","5"]
     model, params = FCN, fcn_params
-    eval = "valid"
-    weights = "lambda017"
-    save = "lambda017_noL2_lr4_valid"
+    eval = "test"
+    weights = "lambda017_noL2_lr4"
+    save = "lambda017_noL2_lr4"
     mode = "target_global"
 
     for target_subject in target_subjects:
