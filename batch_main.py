@@ -1,5 +1,5 @@
-from main import main_target, main_source
-from models.FCN import FCN, params as fcn_params
+from main import main_target
+from processing.models.FCN_old import FCN, params as fcn_params
 
 def batch_main():
     source_dataset = "IDIAB"
@@ -12,16 +12,16 @@ def batch_main():
     mode = "target_global"
 
     for target_subject in target_subjects:
-        main_target(mode=mode,
+        main_target(tl_mode=mode,
                     source_dataset=source_dataset,
                     target_dataset=target_dataset,
                     target_subject=target_subject,
                     Model=model,
                     params=params,
                     weights_dir=weights,
-                    eval=eval,
+                    eval_mode=eval,
                     split=None,
-                    save_file=save,
+                    exp=save,
                     plot=False)
 
 if __name__ == "__main__":

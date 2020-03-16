@@ -1,4 +1,4 @@
-import misc
+import _misc
 import numpy as np
 
 
@@ -9,7 +9,7 @@ def compute_subjects_list(dataset, subject):
         :param subject: name of the subject, accept "all"
         :return: the list of [dataset, subject]
     """
-    datasets_subjects_dict = misc.datasets_subjects_dict
+    datasets_subjects_dict = _misc.datasets_subjects_dict
     if dataset is not None:
         if dataset == "all":
             datasets_subjects = np.array(

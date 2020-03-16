@@ -1,55 +1,22 @@
-import numpy as np
-import pandas as pd
-from misc import *
-from preprocessing.files_processing import subject_files, _remove_subject_from_pool, _get_subject_file_from_name
-from preprocessing.formatting import _reshape_data_into_days, _merge_days, _merge_pool_subjects, \
-    _per_subject_merge_days, _create_samples, _dann_add_domains, _x_y_split
-from preprocessing.cross_validation import _per_subject_split, _split_train_valid, _split_train_valid_test
-from preprocessing.data import Data
-from preprocessing.scaling import _per_subject_standardization, _standardize_pool, _T1DMS_scaling
+from preprocessing.preprocessing_t1dms import preprocessing_t1dms
+from preprocessing.preprocessing_ohio import preprocessing_ohio
 
+preprocessing_per_dataset = {
+    "t1dms_adult": preprocessing_t1dms,
+    "t1dms_adolescent": preprocessing_t1dms,
+    "t1dms_child": preprocessing_t1dms,
+    "ohio": preprocessing_ohio,
+}
 
-def preprocessing(source_dataset, target_dataset, target_subject):
-    pool_data = source_preprocessing(target_dataset, target_subject, source_dataset)
-    subject_data = target_preprocessing(target_dataset, target_subject)
+def preprocessing(dataset, subject, ph, hist, day_len):
+    """
+    associate every dataset with a specific pipeline - which should be consistent with the others
 
-    return pool_data, subject_data
-
-
-def source_preprocessing(source_dataset, target_dataset, target_subject):
-
-    pool_files = _remove_subject_from_pool(source_dataset, target_dataset, target_subject)
-    data = [_global_preprocessing(file) for file in pool_files]
-    train, valid = _per_subject_split(data, cv, _split_train_valid)
-    train, valid = [_per_subject_merge_days(set) for set in [train, valid]]
-    [train, valid], mean, std  = _per_subject_standardization(train, valid)
-
-    # for DANN, add domain for subject before merging
-    train, valid = [_dann_add_domains(set) for set in [train, valid]]
-
-    train, valid = _merge_pool_subjects([train, valid])
-    train, valid = [_x_y_split(_, index=-2) for _ in [train, valid]]
-    return Data(train, valid, valid.copy(), mean.copy(), std.copy())
-
-def target_preprocessing(target_dataset, target_subject):
-    file = _get_subject_file_from_name(target_dataset, target_subject)
-    data = _global_preprocessing(file)
-    train, valid, test = _split_train_valid_test(data, cv)
-    train, valid, test = _merge_days(train), _merge_days(valid), _merge_days(test)
-    [train, valid, test], mean, std = _standardize_pool(train, [valid, test])
-    train, valid, test = [_x_y_split(_, index=-1) for _ in [train, valid, test]]
-    return Data(train, valid, test, mean, std)
-
-
-def _global_preprocessing(file):
-    data = _load_data(file)
-    if "T1DMS" in file:
-        data = _T1DMS_scaling(data)
-    data = _reshape_data_into_days(data)
-    data = _create_samples(data)
-    return data
-
-
-def _load_data(file):
-    return pd.read_csv(file)
-
+    :param dataset: name of dataset (e.g., "ohio")
+    :param subject: name of subject (e.g., "559")
+    :param ph: prediction horizon in minutes (e.g., 5)
+    :param hist: length of history in minutes (e.g., 60)
+    :param day_len: typical length of a day in minutes standardized to the sampling frequency (e.g. 288 for 1440 min at freq=5 minutes)
+    :return: train, valid, test folds
+    """
+    return preprocessing_per_dataset[dataset](dataset, subject, ph, hist, day_len)

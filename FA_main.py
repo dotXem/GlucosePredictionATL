@@ -1,9 +1,9 @@
 from tools.printd import printd
-from evaluation.features_analysis import FeaturesAnalyzer
+from postprocessing.features_analysis import FeaturesAnalyzer
 import argparse
 import sys
 import os
-import misc
+import _misc
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     params_str = args.metric + " " +  args.source +  " " +  args.target + " " + args.exp + " " + args.model + " " + str(args.neighbours) + " " + str(args.to_other) + " " + str(args.use_tsne) + " " 
 
     save_file = args.source + "_2_" + args.target + "_" + args.exp + "_" + args.metric + ".npy"
-    save_file = os.path.join(misc.path, "results", "features_analysis", save_file) if args.save is not None else None
+    save_file = os.path.join(_misc.path, "results", "features_analysis", save_file) if args.save is not None else None
 
     FA = FeaturesAnalyzer(args.source, args.target, args.exp, args.model)
     
