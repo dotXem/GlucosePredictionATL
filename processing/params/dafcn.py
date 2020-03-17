@@ -12,7 +12,7 @@ parameters = {
     "decoder_dropout": 0.5,
 
     # training_old
-    "epochs": 50000,
+    "epochs": 2,
     "batch_size": 100,
     "lr": 1e-5,  # 1e-3
     "patience": 50,

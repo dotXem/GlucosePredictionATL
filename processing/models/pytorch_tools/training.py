@@ -90,8 +90,13 @@ def predict(model, ds):
     model.eval()
     dl = DataLoader(ds, batch_size=len(ds))
 
-    trues = np.reshape(dl.dataset.tensors[1].cpu().detach().numpy(),(-1,1))
-    preds = np.reshape(model(dl.dataset.tensors[0]).cpu().detach().numpy(),(-1,1))
+    trues = dl.dataset.tensors[1].cpu().detach().numpy()
+    preds = model(dl.dataset.tensors[0])
+    if isinstance(preds, tuple):
+        preds = [ts.cpu().detach().numpy() for ts in preds]
+        trues = trues.transpose(1,0)
+    else:
+        preds = np.reshape(preds.cpu().detach().numpy(),(-1,1))
 
     return trues, preds
 

@@ -55,14 +55,6 @@ class DeepPredictor(ABC):
         self.model.load_state_dict(torch.load(path))
         torch.save(self.model.state_dict(), self.checkpoint_file)
 
-    def load_weights(self, encoder_weights, regressor_weights):
-        self.model.encoder.load_state_dict(encoder_weights)
-        self.model.regressor.load_state_dict(regressor_weights)
-        torch.save(self.model.state_dict(), self.checkpoint_file)
-
-    def save_weights(self, file_name):
-        self.model.load_state_dict(torch.load(self.checkpoint_file))
-        torch.save(self.model.state_dict(), compute_weights_path(file_name))
 
     def _create_and_load_checkpoint(self, checkpoint):
         if checkpoint is None:

@@ -1,4 +1,4 @@
-from misc.constants import day_len
+from misc.constants import freq
 import numpy as np
 import misc
 
@@ -12,7 +12,6 @@ def postprocessing(results, scalers, dataset):
     :param scalers:
     :return:
     """
-    freq = misc.datasets.datasets[dataset]["freq"]
     results = _rescale(results, scalers)
     results = _reshape(results, freq)
 

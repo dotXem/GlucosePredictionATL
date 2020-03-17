@@ -58,17 +58,25 @@ def main_target(tl_mode, source_dataset, target_dataset, target_subject, Model, 
 
     train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f, tl_mode)
 
+    if tl_mode == "source_training":
+        save_file = os.path.join(path, "processing", "models", "weights", source_dataset + "_2_" + target_dataset, exp,
+                                 target_dataset + target_subject + "_")
+    else:
+        save_file = None
+
     raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_files=weights_files,
-                                   tl_mode=tl_mode, eval_mode=eval_mode)
-    raw_results = postprocessing(raw_results, scalers, target_dataset)
+                                   tl_mode=tl_mode, save_file=save_file, eval_mode=eval_mode)
 
-    exp += "_" + tl_mode.split("_")[1]
-    results = ResultsSubject(Model.__name__, exp, ph, target_dataset, target_subject, params=params,
-                             results=raw_results)
+    if "target" in tl_mode:
+        raw_results = postprocessing(raw_results, scalers, target_dataset)
 
-    printd(results.compute_results())
-    if plot:
-        results.plot(0)
+        exp += "_" + tl_mode.split("_")[1]
+        results = ResultsSubject(Model.__name__, exp, ph, target_dataset, target_subject, params=params,
+                                 results=raw_results)
+
+        printd(results.compute_results())
+        if plot:
+            results.plot(0)
 
 
 # def main_target(mode, source_dataset, target_dataset, target_subject, Model, params, weights_dir, eval, split,
@@ -193,7 +201,7 @@ if __name__ == "__main__":
     #     main_source(args.source_dataset, args.target_dataset, args.target_subject, Model, params, args.eval, args.split,
     #                 args.save_file)
     # elif args.tl_mode in ["target_training", "target_global", "target_finetuning"]:
-        # main_target(args.mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
-        #             args.weights, args.eval, args.split, args.save_file, args.plot)
+    # main_target(args.mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
+    #             args.weights, args.eval, args.split, args.save_file, args.plot)
     main_target(args.tl_mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
                 args.eval_mode, args.exp, args.plot)
