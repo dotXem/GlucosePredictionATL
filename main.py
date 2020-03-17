@@ -49,22 +49,20 @@ def main_source(source_dataset, target_dataset, target_subject, Model, params, e
 def main_target(tl_mode, source_dataset, target_dataset, target_subject, Model, params, eval_mode, exp, plot):
     hist_f = params["hist"] // freq
 
+    weights_dir = os.path.join(path, "processing", "models", "weights", source_dataset + "_2_" + target_dataset, exp)
     if tl_mode in ["target_global", "target_finetuning"]:
-        weights_files = [os.path.join(path, "processing", "models", "weights", source_dataset + "_2_" + target_dataset,
-                                      Model.__name__ + "_" + target_dataset + target_subject + "_" + str(
-                                          split) + ".pt") for split in range(cv)]
+        weights_file = os.path.join(weights_dir, Model.__name__ + "_" + target_dataset + target_subject + ".pt")
+        save_file = None
+    elif tl_mode == "source_training":
+        save_file = os.path.join(weights_dir, Model.__name__ + "_" + target_dataset + target_subject + ".pt")
+        weights_file = None
     else:
-        weights_files = [None]
+        weights_file = None
+        save_file = None
 
     train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f, tl_mode)
 
-    if tl_mode == "source_training":
-        save_file = os.path.join(path, "processing", "models", "weights", source_dataset + "_2_" + target_dataset, exp,
-                                 target_dataset + target_subject + "_")
-    else:
-        save_file = None
-
-    raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_files=weights_files,
+    raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
                                    tl_mode=tl_mode, save_file=save_file, eval_mode=eval_mode)
 
     if "target" in tl_mode:

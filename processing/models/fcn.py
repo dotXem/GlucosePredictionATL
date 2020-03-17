@@ -10,40 +10,40 @@ from .pytorch_tools.fcn_submodules import *
 
 class FCN(DeepPredictor):
     def fit(self, weights_file=None, tl_mode="target_training", save_file=None):
-        if not tl_mode == "target_global":
             # get training_old data
-            x_train, y_train, t_train = self._str2dataset("train")
-            x_valid, y_valid, t_valid = self._str2dataset("valid")
+        x_train, y_train, t_train = self._str2dataset("train")
+        x_valid, y_valid, t_valid = self._str2dataset("valid")
 
-            # save model
-            rnd = np.random.randint(1e7)
-            self.checkpoint_file = os.path.join(cs.path, "tmp", "checkpoints", "fcn_" + str(rnd) + ".pt")
-            printd("Saved model's file:", self.checkpoint_file)
+        # save model
+        rnd = np.random.randint(1e7)
+        self.checkpoint_file = os.path.join(cs.path, "tmp", "checkpoints", "fcn_" + str(rnd) + ".pt")
+        printd("Saved model's file:", self.checkpoint_file)
 
-            if self.params["domain_adversarial"]:
-                n_domains = int(np.max(y_train[:, 1]) + 1)
-            else:
-                n_domains = 1
+        if self.params["domain_adversarial"]:
+            n_domains = int(np.max(y_train[:, 1]) + 1)
+        else:
+            n_domains = 1
 
-            self.model = self.FCN_Module(x_train.shape[1], x_train.shape[2], self.params["encoder_channels"],
-                                         self.params["encoder_kernel_sizes"],
-                                         self.params["encoder_dropout"], self.params["decoder_channels"],
-                                         self.params["decoder_dropout"], self.params["domain_adversarial"], n_domains)
-            self.model.cuda()
+        self.model = self.FCN_Module(x_train.shape[1], x_train.shape[2], self.params["encoder_channels"],
+                                     self.params["encoder_kernel_sizes"],
+                                     self.params["encoder_dropout"], self.params["decoder_channels"],
+                                     self.params["decoder_dropout"], self.params["domain_adversarial"], n_domains)
+        self.model.cuda()
 
-            if weights_file is not None:
-                self.load_weights_from_file(weights_file)
+        if weights_file is not None:
+            self.load_weights_from_file(weights_file)
 
-            if self.params["domain_adversarial"]:
-                self.loss_func = self.DALoss(self.params["da_lambda"])
-            else:
-                self.loss_func = nn.MSELoss()
+        if self.params["domain_adversarial"]:
+            self.loss_func = self.DALoss(self.params["da_lambda"])
+        else:
+            self.loss_func = nn.MSELoss()
 
-            self.opt = torch.optim.Adam(self.model.parameters(), lr=self.params["lr"], weight_decay=self.params["l2"])
+        self.opt = torch.optim.Adam(self.model.parameters(), lr=self.params["lr"], weight_decay=self.params["l2"])
 
-            train_ds = self.to_dataset(x_train, y_train)
-            valid_ds = self.to_dataset(x_valid, y_valid)
+        train_ds = self.to_dataset(x_train, y_train)
+        valid_ds = self.to_dataset(x_valid, y_valid)
 
+        if not tl_mode == "target_global":
             fit(self.params["epochs"], self.params["batch_size"], self.model, self.loss_func, self.opt, train_ds,
                 valid_ds,
                 self.params["patience"], self.checkpoint_file)
@@ -132,9 +132,9 @@ class FCN(DeepPredictor):
         self.model.regressor.load_state_dict(regressor_weights)
         torch.save(self.model.state_dict(), self.checkpoint_file)
 
-    # def save_weights(self, file_name):
-        # self.model.load_state_dict(torch.load(self.checkpoint_file))
-        # torch.save(self.model.state_dict(), compute_weights_path(file_name))
+    def load_weights_from_file(self, file_name):
+        self.model.load_state_dict(torch.load(file_name))
+        torch.save(self.model.state_dict(), self.checkpoint_file)
 
     def _format_results_source(self, y_true, y_pred, t):
         return pd.DataFrame(data=np.c_[y_true,y_pred],index=pd.DatetimeIndex(t.values),columns=["y_true", "d_true", "y_pred", "d_pred"])

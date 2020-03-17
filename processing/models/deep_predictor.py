@@ -50,10 +50,6 @@ class DeepPredictor(ABC):
         return pd.DataFrame(data=np.c_[y_true,y_pred],index=pd.DatetimeIndex(t.values),columns=["y_true", "y_pred"])
 
 
-    def load_weights_from_file(self, file_name):
-        path = compute_weights_path(file_name)
-        self.model.load_state_dict(torch.load(path))
-        torch.save(self.model.state_dict(), self.checkpoint_file)
 
 
     def _create_and_load_checkpoint(self, checkpoint):
