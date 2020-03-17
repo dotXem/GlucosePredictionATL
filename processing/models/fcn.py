@@ -2,9 +2,7 @@ import torch
 from misc.utils import printd
 import os
 from processing.models.deep_predictor import DeepPredictor
-import numpy as np
 import misc.constants as cs
-import torch.nn as nn
 from .pytorch_tools.training import fit, predict
 from .pytorch_tools.fcn_submodules import *
 
@@ -21,16 +19,25 @@ class FCN(DeepPredictor):
             self.checkpoint_file = os.path.join(cs.path, "tmp", "checkpoints", "fcn_" + str(rnd) + ".pt")
             printd("Saved model's file:", self.checkpoint_file)
 
+            if self.params["domain_adversarial"]:
+                n_domains = int(np.max(y_train[:,1]) + 1)
+            else:
+                n_domains = 1
+
             self.model = self.FCN_Module(x_train.shape[1], x_train.shape[2], self.params["encoder_channels"],
                                          self.params["encoder_kernel_sizes"],
                                          self.params["encoder_dropout"], self.params["decoder_channels"],
-                                         self.params["decoder_dropout"])
+                                         self.params["decoder_dropout"], self.params["domain_adversarial"], n_domains)
             self.model.cuda()
 
             if weights_file is not None:
                 self.load_weights_from_file(weights_file)
 
-            self.loss_func = nn.MSELoss()
+            if self.params["domain_adversarial"]:
+                self.loss_func = self.DALoss(self.params["da_lambda"])
+            else:
+                self.loss_func = nn.MSELoss()
+
             self.opt = torch.optim.Adam(self.model.parameters(), lr=self.params["lr"], weight_decay=self.params["l2"])
 
             train_ds = self.to_dataset(x_train, y_train)
@@ -59,7 +66,10 @@ class FCN(DeepPredictor):
 
         # extract data from data df
         t = data["datetime"]
-        y = data["y"]
+        if self.params["domain_adversarial"]:
+            y = data[["y","domain"]].values
+        else:
+            y = data["y"].values
 
         g = data.loc[:, [col for col in data.columns if "glucose" in col]].values
         cho = data.loc[:, [col for col in data.columns if "CHO" in col]].values
@@ -76,13 +86,13 @@ class FCN(DeepPredictor):
 
         # x = np.concatenate([g, cho, ins, t_x], axis=2)
         x = np.concatenate([g, cho, ins], axis=2)
-        x = x.transpose(0, 2, 1) # order: batch, channels, history
+        x = x.transpose(0, 2, 1)  # order: batch, channels, history
 
         return x, y, t
 
     class FCN_Module(nn.Module):
-        def __init__(self, n_in, history_length, encoder_channels, encoder_kernel_sizes, encoder_dropout, decoder_channels,
-                     decoder_dropout):
+        def __init__(self, n_in, history_length, encoder_channels, encoder_kernel_sizes, encoder_dropout,
+                     decoder_channels, decoder_dropout, domain_adversarial=False, n_domains=0):
             super().__init__()
 
             decoder_input_dims = [encoder_channels[-1]]
@@ -92,8 +102,38 @@ class FCN(DeepPredictor):
             self.regressor = FCN_Regressor_Module(decoder_input_dims, decoder_channels, decoder_kernel_sizes,
                                                   decoder_dropout)
 
+            if domain_adversarial:
+                self.domain_classifier = FCN_Domain_Classifier_Module(decoder_input_dims, decoder_channels,
+                                                                  decoder_kernel_sizes, decoder_dropout, n_domains)
+            else:
+                self.domain_classifier = None
+
         def forward(self, input):
             features = self.encoder(input)
             prediction = self.regressor(features)
+            if self.domain_classifier is not None:
+                domain = self.domain_classifier(features)
+                return prediction.squeeze(), domain.squeeze()
+            else:
+                return prediction.squeeze()
 
-            return prediction.squeeze()
+    class DALoss(nn.Module):
+        def __init__(self, lambda_):
+            super().__init__()
+
+            self.lambda_ = lambda_
+
+            self.mse = nn.MSELoss()
+            self.nll = nn.NLLLoss()
+
+        def forward(self, x, y):
+            y_preds = x[0]
+            domain_preds = x[1]
+
+            y_trues = y[:, 0]
+            domain_trues = y[:, 1].long()
+
+            mse = self.mse(y_preds, y_trues)
+            nll = self.nll(domain_preds, domain_trues)
+
+            return mse + self.lambda_ * nll, mse, nll

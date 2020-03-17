@@ -56,7 +56,7 @@ def main_target(tl_mode, source_dataset, target_dataset, target_subject, Model, 
     else:
         weights_files = [None]
 
-    train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f)
+    train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f, tl_mode)
 
     raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_files=weights_files,
                                    tl_mode=tl_mode, eval_mode=eval_mode)
@@ -160,6 +160,7 @@ if __name__ == "__main__":
     parser.add_argument("--target_dataset", type=str)
     parser.add_argument("--target_subject", type=str)
     parser.add_argument("--model", type=str)
+    parser.add_argument("--params", type=str)
     parser.add_argument("--weights", type=str)
     parser.add_argument("--eval_mode", type=str)
     parser.add_argument("--split", type=int)
@@ -170,7 +171,10 @@ if __name__ == "__main__":
 
     model_name = args.model if args.model is not None else sys.exit(-1)
     Model = locate("processing.models." + model_name + "." + model_name.upper())
-    params = locate("processing.params." + model_name + ".parameters")
+    if args.params is not None:
+        params = locate("processing.params." + args.params + ".parameters")
+    else:
+        params = locate("processing.params." + model_name + ".parameters")
 
     # redirect the logs to a file if specified
     if args.log is not None:
@@ -185,11 +189,11 @@ if __name__ == "__main__":
         if not os.path.exists(dir): os.makedirs(dir)
         # os.makedirs(os.path.join(path, "results", args.save))
 
-    if args.tl_mode == "source_training":
-        main_source(args.source_dataset, args.target_dataset, args.target_subject, Model, params, args.eval, args.split,
-                    args.save_file)
-    elif args.tl_mode in ["target_training", "target_global", "target_finetuning"]:
+    # if args.tl_mode == "source_training":
+    #     main_source(args.source_dataset, args.target_dataset, args.target_subject, Model, params, args.eval, args.split,
+    #                 args.save_file)
+    # elif args.tl_mode in ["target_training", "target_global", "target_finetuning"]:
         # main_target(args.mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
         #             args.weights, args.eval, args.split, args.save_file, args.plot)
-        main_target(args.tl_mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
-                    args.eval_mode, args.exp, args.plot)
+    main_target(args.tl_mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
+                args.eval_mode, args.exp, args.plot)

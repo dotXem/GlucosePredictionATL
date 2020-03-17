@@ -4,16 +4,33 @@ from torch.utils.data import DataLoader
 from .early_stopping import EarlyStopping
 from misc.utils import printd
 
+# def loss_batch(model, loss_func, xb, yb, opt=None):
+#     """ compute the loss for a mini batch"""
+#     loss = loss_func(model(xb), yb)
+#
+#     if opt is not None:
+#         loss.backward()
+#         opt.step()
+#         opt.zero_grad()
+#
+#     return loss.item(), len(xb)
+
+
 def loss_batch(model, loss_func, xb, yb, opt=None):
-    """ compute the loss for a mini batch"""
-    loss = loss_func(model(xb), yb)
+    if loss_func.__class__.__name__ == "DALoss":
+        loss, mse, nll = loss_func(model(xb), yb)
+    else:
+        loss = loss_func(model(xb), yb)
 
     if opt is not None:
         loss.backward()
         opt.step()
         opt.zero_grad()
 
-    return loss.item(), len(xb)
+    if loss_func.__class__.__name__ == "DALoss":
+        return loss.item(), mse.item(), nll.item(), len(xb)
+    else:
+        return loss.item(), len(xb)
 
 
 def fit(epochs, batch_size, model, loss_func, opt, train_ds, valid_ds, patience, checkpoint_file):

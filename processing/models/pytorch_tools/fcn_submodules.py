@@ -1,7 +1,6 @@
 import torch.nn as nn
 import numpy as np
 from torch.autograd import Function
-from _misc import hist_freq
 
 class FCN_Encoder_Module(nn.Module):
     def __init__(self, n_in, channels, kernel_sizes, dropout):

@@ -1,5 +1,6 @@
 parameters = {
-    "domain_adversarial": False,
+    "domain_adversarial": True,
+    "da_lambda": 10**(-0.75),
     "hist": 60,
     "n_in": 3,
 
