@@ -52,24 +52,31 @@ def fill_nans(data, day_len, n_days_test):
                     # we got a start and an end
                     start = notna_idx[np.where(idx_diff < 0, idx_diff, -np.inf).argmax()]
                     end = notna_idx[np.where(idx_diff > 0, idx_diff, np.inf).argmin()]
-                    start_val, end_val = data_nan.loc[start, "glucose_0"], data_nan.loc[end, "glucose_0"]
+
+                    start_idx = _compute_indexes(i, start, len(data_nan))
+                    end_idx = _compute_indexes(i, end, len(data_nan))
+
+                    start_val = data_nan.loc[start_idx]
+                    end_val = data_nan.loc[end_idx]
 
                     # interpolate between them
                     rate = (end_val - start_val) / (end - start)
-                    data.loc[i, g_col[isna_i - i]] = data_nan.loc[start, "glucose_0"] + rate * (isna_i - start)
+                    data.loc[i, g_col[isna_i - i]] = data_nan.loc[start_idx] + rate * (isna_i - start)
                 elif np.any(idx_diff > 0):
                     # we only have end(s)
                     # backward extrapolation - only used in very first day where there is no start
                     if len(idx_diff) >= 2:
                         # we have two last values so we can compute a rate
                         end1, end2 = notna_idx[0], notna_idx[1]
-                        end1_val, end2_val = data_nan.loc[end1, "glucose_0"], data_nan.loc[end2, "glucose_0"]
+                        [end1_idx, end2_idx] = [_compute_indexes(i, _, len(data_nan)) for _ in [end1, end2]]
+                        end1_val, end2_val = data_nan.loc[end1_idx], data_nan.loc[end2_idx]
                         rate = (end2_val - end1_val) / (end2 - end1)
-                        data.loc[i, g_col[isna_i - i]] = data_nan.loc[end1, "glucose_0"] - rate * (end1 - isna_i)
+                        data.loc[i, g_col[isna_i - i]] = data_nan.loc[end1_idx] - rate * (end1 - isna_i)
                     else:
                         # we have only one value so we cannot compute a rate
                         end = notna_idx[0]
-                        end_val = data_nan.loc[end, "glucose_0"]
+                        end_idx = _compute_indexes(i, end, len(data_nan))
+                        end_val = data_nan.loc[end_idx]
                         data.loc[i, g_col[isna_i - i]] = end_val
                 elif np.any(idx_diff < 0):
                     last_val = g_i[g_i.notna()][-1]
@@ -78,13 +85,8 @@ def fill_nans(data, day_len, n_days_test):
     return data
 
 
-def remove_nans(data):
-    """
-    Remove samples that still have NaNs (in y column mostly)
-    :param data: dataframe of samples
-    :return: no-NaN dataframe
-    """
-    new_data = []
-    for df in data:
-        new_data.append(df.dropna())
-    return new_data
+def _compute_indexes(i, index, len):
+    if index >= len:
+        return (i, "glucose_" + str(index - i))
+    else:
+        return (index, "glucose_0")

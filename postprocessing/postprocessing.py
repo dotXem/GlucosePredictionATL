@@ -1,4 +1,5 @@
 from misc.constants import freq
+from misc.datasets import datasets
 import numpy as np
 import misc
 
@@ -13,7 +14,7 @@ def postprocessing(results, scalers, dataset):
     :return:
     """
     results = _rescale(results, scalers)
-    results = _reshape(results, freq)
+    results = _reshape(results, max([freq,datasets[dataset]["glucose_freq"]]))
 
     return results
 

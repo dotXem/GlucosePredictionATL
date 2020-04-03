@@ -1,7 +1,7 @@
 parameters = {
-    "domain_adversarial": True,
-    "da_lambda": 10**(-0.75),
-    "hist": 60,
+    "domain_adversarial": False,
+    "da_lambda":0,
+    "hist": 180,
     "n_in": 3,
 
     "encoder_channels": [64, 128, 64],

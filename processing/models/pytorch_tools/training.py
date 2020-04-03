@@ -3,20 +3,9 @@ import numpy as np
 from torch.utils.data import DataLoader
 from .early_stopping import EarlyStopping
 from misc.utils import printd
+from .plot_gradient import plot_grad_flow
 
-# def loss_batch(model, loss_func, xb, yb, opt=None):
-#     """ compute the loss for a mini batch"""
-#     loss = loss_func(model(xb), yb)
-#
-#     if opt is not None:
-#         loss.backward()
-#         opt.step()
-#         opt.zero_grad()
-#
-#     return loss.item(), len(xb)
-
-
-def loss_batch(model, loss_func, xb, yb, opt=None):
+def loss_batch(model, loss_func, xb, yb, opt=None, plot_gradient=False):
     if loss_func.__class__.__name__ == "DALoss":
         loss, mse, nll = loss_func(model(xb), yb)
     else:
@@ -24,6 +13,8 @@ def loss_batch(model, loss_func, xb, yb, opt=None):
 
     if opt is not None:
         loss.backward()
+        if plot_gradient:
+            plot_grad_flow(model.named_parameters())
         opt.step()
         opt.zero_grad()
 

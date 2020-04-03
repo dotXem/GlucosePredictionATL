@@ -1,129 +1,120 @@
-from pydoc import locate
+from tools.get_models_params import locate_model, locate_params
 import sys
 import argparse
 import os
-# from _misc import path, cv, freq
-from preprocessing_old.preprocessing import source_preprocessing, target_preprocessing
-from postprocessing_old.postprocessing import source_postprocessing, target_postprocessing
-from evaluation_old.results import ResultsSource, ResultsTarget
 from tools.printd import printd
-from tools.domain2domain import domain_2_domain_str
-
 from misc.constants import *
-from preprocessing.preprocessing import preprocessing
+from preprocessing.preprocessing import preprocessing, preprocessing_source_multi
 from processing.cross_validation import make_predictions
 from postprocessing.postprocessing import postprocessing
 from postprocessing.results import ResultsSubject
 
-
-def main_source(source_dataset, target_dataset, target_subject, Model, params, eval, split, save_file):
-    data = source_preprocessing(source_dataset, target_dataset, target_subject)
-
-    splits = [split] if split is not None else range(cv)
-    results = []
-    for split_number in splits:
-        train, valid, test, means, stds = data.get_split(split_number)
-
-        model = Model(params)
-        model.fit(*train, *valid)
-
-        y_true, y_pred = model.predict(*test) if eval == "test" else model.predict(*valid)
-
-        results.append(source_postprocessing(y_true, y_pred, means, stds))
-
-        if save_file is not None:
-            file = os.path.join(domain_2_domain_str(source_dataset, target_dataset), save_file,
-                                target_dataset + target_subject + "_" + str(split_number))
-            model.save_encoder_regressor(file)
-
-        model.clear_checkpoint()
-
-    results = ResultsSource(save_file, source_dataset, target_dataset, target_subject, Model.__name__,
-                            results=results)
-    printd(results.get_results())
-
-    if save_file is not None:
-        results.save()
-
-
-def main_target(tl_mode, source_dataset, target_dataset, target_subject, Model, params, eval_mode, exp, plot):
+def main_target_training(source_dataset, target_dataset, target_subject, Model, params, weights_exp, eval_mode, exp, plot):
     hist_f = params["hist"] // freq
+    weights_dir = os.path.join(path, "processing", "models", "weights", source_dataset + "_2_" + target_dataset,
+                               weights_exp)
+    weights_file = None
+    save_file = None
+    train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f)
+    raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
+                                   tl_mode="target_training", save_file=save_file, eval_mode=eval_mode)
 
-    weights_dir = os.path.join(path, "processing", "models", "weights", source_dataset + "_2_" + target_dataset, exp)
-    if tl_mode in ["target_global", "target_finetuning"]:
-        weights_file = os.path.join(weights_dir, Model.__name__ + "_" + target_dataset + target_subject + ".pt")
-        save_file = None
-    elif tl_mode == "source_training":
-        save_file = os.path.join(weights_dir, Model.__name__ + "_" + target_dataset + target_subject + ".pt")
-        weights_file = None
-    else:
-        weights_file = None
-        save_file = None
+    evaluation(raw_results, scalers, source_dataset, target_dataset, target_subject, Model, params, exp, plot, "target_training")
 
-    train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f, tl_mode)
+
+def main_source_training(source_dataset, target_dataset, target_subject, Model, params, weights_exp, eval_mode, exp, plot):
+    hist_f = params["hist"] // freq
+    weights_dir = os.path.join(path, "processing", "models", "weights", source_dataset + "_2_" + target_dataset,
+                               weights_exp)
+    save_file = os.path.join(weights_dir, Model.__name__ + "_" + target_dataset + target_subject + ".pt")
+    weights_file = None
+    train, valid, test, scalers = preprocessing_source_multi(source_dataset, target_dataset, target_subject, ph_f,
+                                                             hist_f, day_len_f)
+    raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
+                                   tl_mode="source_training", save_file=save_file, eval_mode=eval_mode)
+
+
+
+def main_target_global(source_dataset, target_dataset, target_subject, Model, params, weights_exp, eval_mode, exp, plot):
+    hist_f = params["hist"] // freq
+    weights_dir = os.path.join(path, "processing", "models", "weights", source_dataset + "_2_" + target_dataset,
+                               weights_exp)
+    weights_file = os.path.join(weights_dir, Model.__name__ + "_" + target_dataset + target_subject + ".pt")
+    save_file = None
+    train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f)
 
     raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
-                                   tl_mode=tl_mode, save_file=save_file, eval_mode=eval_mode)
+                                   tl_mode="target_global", save_file=save_file, eval_mode=eval_mode)
 
-    if "target" in tl_mode:
-        raw_results = postprocessing(raw_results, scalers, target_dataset)
-
-        exp += "_" + tl_mode.split("_")[1]
-        results = ResultsSubject(Model.__name__, exp, ph, target_dataset, target_subject, params=params,
-                                 results=raw_results)
-
-        printd(results.compute_results())
-        if plot:
-            results.plot(0)
+    evaluation(raw_results, scalers, source_dataset, target_dataset, target_subject, Model, params, exp, plot, "target_global")
 
 
-# def main_target(mode, source_dataset, target_dataset, target_subject, Model, params, weights_dir, eval, split,
-#                 save_file, plot):
+def main_target_finetuning(source_dataset, target_dataset, target_subject, Model, params, weights_exp, eval_mode, exp, plot):
+    hist_f = params["hist"] // freq
+    weights_dir = os.path.join(path, "processing", "models", "weights", source_dataset + "_2_" + target_dataset,
+                               weights_exp)
+    weights_file = os.path.join(weights_dir, Model.__name__ + "_" + target_dataset + target_subject + ".pt")
+    save_file = None
+    train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f)
 
-# data = target_preprocessing(target_dataset, target_subject)
-#
-# splits = [split] if split is not None else range(cv * (cv - 1))
-# results = []
-# for split_number in splits:
-#     train, valid, test, means, stds = data.get_split(split_number)
-#
-#     if mode in ["target_global", "target_finetuning"] and weights_dir is not None:
-#         weights_files = [os.path.join(domain_2_domain_str(source_dataset, target_dataset), weights_dir,
-#                                       Model.__name__ + "_" + target_dataset + target_subject + "_" + str(
-#                                           split) + ".pt") for split in range(cv)]
-#     else:
-#         weights_files = [None]
-#
-#     for weights_file in weights_files:
-#
-#         model = Model(params)
-#         if weights_file is not None: model.load_weights_from_file(weights_file)
-#
-#         if not mode == "target_global":
-#             model.fit(*train, *valid)
-#
-#         y_true, y_pred = model.predict(*test) if eval == "test" else model.predict(*valid)
-#
-#         results.append(target_postprocessing(y_true, y_pred, means, stds))
-#
-#         model.clear_checkpoint()
-#
-# if mode == "target_global":
-#     suffix = "global"
-# elif mode == "target_training":
-#     suffix = "training_old"
-# elif mode == "target_finetuning":
-#     suffix = "finetuning"
-# save_file = save_file + "_" + suffix
-#
-# results = ResultsTarget(save_file, source_dataset, target_dataset, target_subject, Model.__name__,
-#                         results=results)
-# printd(results.get_results())
-#
-# if save_file is not None: results.save()
-#
-# if plot is not None and plot: results.plot()
+    raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
+                                   tl_mode="target_finetuning", save_file=save_file, eval_mode=eval_mode)
 
+    evaluation(raw_results, scalers, source_dataset, target_dataset, target_subject, Model, params, exp, plot, "target_finetuning")
+
+
+
+def evaluation(raw_results, scalers, source_dataset, target_dataset, target_subject, Model, params, exp, plot, tl_mode):
+    raw_results = postprocessing(raw_results, scalers, target_dataset)
+
+    exp += "_" + tl_mode.split("_")[1]
+    exp = os.path.join(source_dataset + "_2_" + target_dataset, exp)
+    results = ResultsSubject(Model.__name__, exp, ph, target_dataset, target_subject, params=params,
+                             results=raw_results)
+
+    printd(results.compute_results())
+    if plot:
+        results.plot(0)
+
+
+def process_main_args(args):
+    Model = locate_model(args.model)
+    params = locate_params(args.params)
+
+    # redirect the logs to a file if specified
+    if args.log is not None:
+        log_file = args.log
+        log_path = os.path.join(path, "logs", log_file)
+        sys.stdout = open(log_path, "w")
+
+    sbj_msg = args.source_dataset + "_2_" + args.target_dataset, " " + args.target_subject
+    if args.tl_mode == "source_training":
+        printd("source_training", sbj_msg)
+        main_source_training(args.source_dataset, args.target_dataset, args.target_subject, Model, params,
+                             args.weights, args.eval_mode, args.exp, args.plot)
+    elif args.tl_mode == "target_training":
+        printd("target_training", sbj_msg)
+        main_target_training(args.source_dataset, args.target_dataset, args.target_subject, Model, params,
+                             args.weights, args.eval_mode, args.exp, args.plot)
+    elif args.tl_mode == "target_global":
+        printd("target_global", sbj_msg)
+        main_target_global(args.source_dataset, args.target_dataset, args.target_subject, Model, params,
+                           args.weights, args.eval_mode, args.exp, args.plot)
+    elif args.tl_mode == "target_finetuning":
+        printd("target_finetuning", sbj_msg)
+        main_target_finetuning(args.source_dataset, args.target_dataset, args.target_subject, Model, params,
+                               args.weights, args.eval_mode, args.exp, args.plot)
+    elif args.tl_mode == "end_to_end" and args.params2 is not None:
+        printd("end_to_end", sbj_msg)
+
+        params2 = locate_params(args.params2)
+
+        main_source_training(args.source_dataset, args.target_dataset, args.target_subject, Model, params,
+                             args.weights, args.eval_mode, args.exp, args.plot)
+        main_target_global(args.source_dataset, args.target_dataset, args.target_subject, Model, params2,
+                           args.weights, args.eval_mode, args.exp, args.plot)
+        main_target_finetuning(args.source_dataset, args.target_dataset, args.target_subject, Model, params2,
+                               args.weights, args.eval_mode, args.exp, args.plot)
 
 if __name__ == "__main__":
     """
@@ -167,6 +158,7 @@ if __name__ == "__main__":
     parser.add_argument("--target_subject", type=str)
     parser.add_argument("--model", type=str)
     parser.add_argument("--params", type=str)
+    parser.add_argument("--params2", type=str)
     parser.add_argument("--weights", type=str)
     parser.add_argument("--eval_mode", type=str)
     parser.add_argument("--split", type=int)
@@ -175,31 +167,5 @@ if __name__ == "__main__":
     parser.add_argument("--plot", type=bool)
     args = parser.parse_args()
 
-    model_name = args.model if args.model is not None else sys.exit(-1)
-    Model = locate("processing.models." + model_name + "." + model_name.upper())
-    if args.params is not None:
-        params = locate("processing.params." + args.params + ".parameters")
-    else:
-        params = locate("processing.params." + model_name + ".parameters")
+    process_main_args(args)
 
-    # redirect the logs to a file if specified
-    if args.log is not None:
-        log_file = args.log
-        log_path = os.path.join(path, "logs", log_file)
-        sys.stdout = open(log_path, "w")
-
-    # create save directories
-    if args.exp is not None:
-        dir = os.path.join(path, "models", "weights", domain_2_domain_str(args.source_dataset, args.target_dataset),
-                           args.exp)
-        if not os.path.exists(dir): os.makedirs(dir)
-        # os.makedirs(os.path.join(path, "results", args.save))
-
-    # if args.tl_mode == "source_training":
-    #     main_source(args.source_dataset, args.target_dataset, args.target_subject, Model, params, args.eval, args.split,
-    #                 args.save_file)
-    # elif args.tl_mode in ["target_training", "target_global", "target_finetuning"]:
-    # main_target(args.mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
-    #             args.weights, args.eval, args.split, args.save_file, args.plot)
-    main_target(args.tl_mode, args.source_dataset, args.target_dataset, args.target_subject, Model, params,
-                args.eval_mode, args.exp, args.plot)

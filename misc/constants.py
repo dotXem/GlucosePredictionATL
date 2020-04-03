@@ -8,4 +8,3 @@ ph = 30
 ph_f = ph // freq
 day_len_f = day_len // freq
 
-n_days_test = 10 # number of last days taken as test set

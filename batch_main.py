@@ -1,28 +1,24 @@
-from main import main_target
-from processing.models.FCN_old import FCN, params as fcn_params
-
-def batch_main():
-    source_dataset = "IDIAB"
-    target_dataset = "IDIAB"
-    target_subjects = ["1","2","3","4","5"]
-    model, params = FCN, fcn_params
-    eval = "test"
-    weights = "lambda017_noL2_lr4"
-    save = "lambda017_noL2_lr4"
-    mode = "target_global"
-
-    for target_subject in target_subjects:
-        main_target(tl_mode=mode,
-                    source_dataset=source_dataset,
-                    target_dataset=target_dataset,
-                    target_subject=target_subject,
-                    Model=model,
-                    params=params,
-                    weights_dir=weights,
-                    eval_mode=eval,
-                    split=None,
-                    exp=save,
-                    plot=False)
+from main import process_main_args
+from misc.datasets import datasets
+import argparse
 
 if __name__ == "__main__":
-    batch_main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tl_mode", type=str)
+    parser.add_argument("--source_dataset", type=str)
+    parser.add_argument("--target_dataset", type=str)
+    parser.add_argument("--target_subject",type=str)
+    parser.add_argument("--model", type=str)
+    parser.add_argument("--params", type=str)
+    parser.add_argument("--params2", type=str)
+    parser.add_argument("--weights", type=str)
+    parser.add_argument("--eval_mode", type=str)
+    parser.add_argument("--split", type=int)
+    parser.add_argument("--log", type=str)
+    parser.add_argument("--exp", type=str)
+    parser.add_argument("--plot", type=bool)
+    args = parser.parse_args()
+
+    for subject in datasets[args.target_dataset]["subjects"]:
+        args.target_subject = subject
+        process_main_args(args)

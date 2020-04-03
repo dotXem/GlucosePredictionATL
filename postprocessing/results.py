@@ -23,7 +23,7 @@ class ResultsDataset():
         self.experiment = experiment
         self.ph = ph
         self.dataset = dataset
-        self.freq = misc.constants.freq
+        self.freq = np.max([misc.constants.freq, misc.datasets.datasets[dataset]["glucose_freq"]])
         self.legacy = legacy
         self.subjects = misc.datasets.datasets[self.dataset]["subjects"]
 
@@ -77,6 +77,14 @@ class ResultsDataset():
         print(str)
 
 
+
+class ResultsDatasetTransfer(ResultsDataset):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.experiment = self.source_dataset + "_2_" + self.target_dataset + "\\" + self.experiment
+
+
+
 class ResultsSubject():
     def __init__(self, model, experiment, ph, dataset, subject, params=None, results=None, legacy=False):
         """
@@ -95,7 +103,7 @@ class ResultsSubject():
         self.ph = ph
         self.dataset = dataset
         self.subject = subject
-        self.freq = misc.constants.freq
+        self.freq = np.max([misc.constants.freq, misc.datasets.datasets[dataset]["glucose_freq"]])
 
         if results is None and params is None:
             if not legacy:
@@ -109,14 +117,17 @@ class ResultsSubject():
 
         # self.results = self._format_results(self.results)
 
-    def load_raw_results(self, legacy=False):
+    def load_raw_results(self, legacy=False, transfer=False):
         """
         Load the results from previous instance of ResultsSubject that has saved the them
         :param legacy: if legacy object shall  be used
         :return: (params dictionary), dataframe with ground truths and predictions
         """
         file = self.dataset + "_" + self.subject + ".npy"
-        path = os.path.join(cs.path, "results", self.model, self.experiment, "ph-" + str(self.ph), file)
+        if not transfer:
+            path = os.path.join(cs.path, "results", self.model, self.experiment, "ph-" + str(self.ph), file)
+        else:
+            path = os.path.join(cs.path, "results", self.model, self.experiment, "ph-" + str(self.ph), file)
 
         if not legacy:
             params, results = np.load(path, allow_pickle=True)

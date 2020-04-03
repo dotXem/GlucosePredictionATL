@@ -7,7 +7,8 @@ import pandas as pd
 import numpy as np
 import torch
 
-from processing.models.pytorch_tools.files import compute_checkpoint_file_name, compute_checkpoint_path, compute_weights_path
+# from _old.models_old.tools.files import compute_checkpoint_file_name, compute_checkpoint_path
+
 
 class DeepPredictor(ABC):
     def __init__(self, subject, ph, params, train, valid, test):
@@ -49,15 +50,12 @@ class DeepPredictor(ABC):
     def _format_results(self, y_true, y_pred, t):
         return pd.DataFrame(data=np.c_[y_true,y_pred],index=pd.DatetimeIndex(t.values),columns=["y_true", "y_pred"])
 
+    def load_weights_from_file(self, file_name):
+        self.model.load_state_dict(torch.load(file_name))
+        torch.save(self.model.state_dict(), self.checkpoint_file)
 
-
-
-    def _create_and_load_checkpoint(self, checkpoint):
-        if checkpoint is None:
-            self.checkpoint_file = compute_checkpoint_path(compute_checkpoint_file_name(self))
-        else:
-            self.checkpoint_file = compute_checkpoint_path(self.params["checkpoint"])
-            self.model.load_state_dict(torch.load(self.checkpoint_file))
+    def _format_results_source(self, y_true, y_pred, t):
+        return pd.DataFrame(data=np.c_[y_true,y_pred],index=pd.DatetimeIndex(t.values),columns=["y_true", "d_true", "y_pred", "d_pred"])
 
 
     def to_dataset(self, x, y):
