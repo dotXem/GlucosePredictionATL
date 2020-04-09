@@ -27,7 +27,7 @@ class ResultsDataset():
         self.legacy = legacy
         self.subjects = misc.datasets.datasets[self.dataset]["subjects"]
 
-    def compute_results(self):
+    def compute_results(self, details=False):
         """
         Loop through the subjects of the dataset, and compute the mean performances
         :return: mean of metrics, std of metrics
@@ -35,8 +35,11 @@ class ResultsDataset():
         res = []
         for subject in self.subjects:
             res_subject = ResultsSubject(self.model, self.experiment, self.ph, self.dataset, subject,
-                                         legacy=self.legacy)
-            res.append(res_subject.compute_results()[0])  # only the mean
+                                         legacy=self.legacy).compute_results()
+            if details:
+                print(self.dataset, subject, res_subject)
+
+            res.append(res_subject[0])  # only the mean
 
         keys = list(res[0].keys())
         res = [list(res_.values()) for res_ in res]
@@ -79,11 +82,33 @@ class ResultsDataset():
 
 
 class ResultsDatasetTransfer(ResultsDataset):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.experiment = self.source_dataset + "_2_" + self.target_dataset + "\\" + self.experiment
+    def __init__(self, model, experiment, ph, source_dataset, target_dataset, legacy=False):
+        experiment = source_dataset + "_2_" + target_dataset + "\\" + experiment
+        super().__init__(model, experiment, ph, target_dataset, legacy=False)
 
+    def to_latex(self, table="acc", model_name=None):
+        """
+        Format the results into a string for the paper in LATEX
+        :param table: either "acc" or "cg_ega", corresponds to the table
+        :param model_name: prefix of the string, name of the model
+        :return:
+        """
+        mean, std = self.compute_results()
+        # res = np.c_[mean, std]
+        name = model_name if model_name is not None else self.model + "_" + self.experiment
+        if table == "cg_ega":
+            pass
+            # cg_ega_keys = ["CG_EGA_AP_hypo", "CG_EGA_BE_hypo", "CG_EGA_EP_hypo", "CG_EGA_AP_eu", "CG_EGA_BE_eu",
+            #                "CG_EGA_EP_eu", "CG_EGA_AP_hyper", "CG_EGA_BE_hyper", "CG_EGA_EP_hyper"]
+            # mean = [mean[k] * 100 for k in cg_ega_keys]
+            # std = [std[k] * 100 for k in cg_ega_keys]
+        elif table == "acc":
+            acc_keys = ["RMSE", "MAPE"]
+            mean = [mean[k] for k in acc_keys]
+            std = [std[k] for k in acc_keys]
 
+        str = " & ".join(["{0:.2f} \\scriptsize{{({1:.2f})}}".format(mean_, std_) for mean_, std_ in zip(mean, std)])
+        print(str)
 
 class ResultsSubject():
     def __init__(self, model, experiment, ph, dataset, subject, params=None, results=None, legacy=False):
@@ -161,7 +186,7 @@ class ResultsSubject():
         np.save(os.path.join(dir, self.dataset + "_" + self.subject + ".npy"), [self.params, saveable_results])
         # np.save(os.path.join(dir, self.dataset + "_" + self.subject + ".npy"), np.array())
 
-    def compute_results(self, split_by_day=False):
+    def compute_results(self, split_by_day=False, raw_score=False):
         """
         Compute the results by averaging on the whole days (that can be not continuous, because of cross-validation)
         :return: dictionary with performances per metric
@@ -186,43 +211,62 @@ class ResultsSubject():
         tg_score = [time_lag.time_gain(res_day, self.ph, self.freq, "mse") for res_day in results]
         tg_mean, tg_std = np.nanmean(tg_score), np.nanstd(tg_score)
 
-        cg_ega_score = [cg_ega.CG_EGA(res_day, self.freq).simplified() for res_day in results]
+        cg_ega_score = np.array([cg_ega.CG_EGA(res_day, self.freq).simplified() for res_day in results])
         cg_ega_mean, cg_ega_std = np.nanmean(cg_ega_score, axis=0), np.nanstd(cg_ega_score, axis=0)
 
-        mean = {
-            "RMSE": rmse_mean,
-            "MAPE": mape_mean,
-            "MASE": mase_mean,
-            "TG": tg_mean,
-            "CG_EGA_AP_hypo": cg_ega_mean[0],
-            "CG_EGA_BE_hypo": cg_ega_mean[1],
-            "CG_EGA_EP_hypo": cg_ega_mean[2],
-            "CG_EGA_AP_eu": cg_ega_mean[3],
-            "CG_EGA_BE_eu": cg_ega_mean[4],
-            "CG_EGA_EP_eu": cg_ega_mean[5],
-            "CG_EGA_AP_hyper": cg_ega_mean[6],
-            "CG_EGA_BE_hyper": cg_ega_mean[7],
-            "CG_EGA_EP_hyper": cg_ega_mean[8],
-        }
 
-        std = {
-            "RMSE": rmse_std,
-            "MAPE": mape_std,
-            "MASE": mase_std,
-            "TG": tg_std,
-            "CG_EGA_AP_hypo": cg_ega_std[0],
-            "CG_EGA_BE_hypo": cg_ega_std[1],
-            "CG_EGA_EP_hypo": cg_ega_std[2],
-            "CG_EGA_AP_eu": cg_ega_std[3],
-            "CG_EGA_BE_eu": cg_ega_std[4],
-            "CG_EGA_EP_eu": cg_ega_std[5],
-            "CG_EGA_AP_hyper": cg_ega_std[6],
-            "CG_EGA_BE_hyper": cg_ega_std[7],
-            "CG_EGA_EP_hyper": cg_ega_std[8],
-        }
+        if not raw_score:
+            mean = {
+                "RMSE": rmse_mean,
+                "MAPE": mape_mean,
+                "MASE": mase_mean,
+                "TG": tg_mean,
+                "CG_EGA_AP_hypo": cg_ega_mean[0],
+                "CG_EGA_BE_hypo": cg_ega_mean[1],
+                "CG_EGA_EP_hypo": cg_ega_mean[2],
+                "CG_EGA_AP_eu": cg_ega_mean[3],
+                "CG_EGA_BE_eu": cg_ega_mean[4],
+                "CG_EGA_EP_eu": cg_ega_mean[5],
+                "CG_EGA_AP_hyper": cg_ega_mean[6],
+                "CG_EGA_BE_hyper": cg_ega_mean[7],
+                "CG_EGA_EP_hyper": cg_ega_mean[8],
+            }
 
-        return mean, std
-
+            std = {
+                "RMSE": rmse_std,
+                "MAPE": mape_std,
+                "MASE": mase_std,
+                "TG": tg_std,
+                "CG_EGA_AP_hypo": cg_ega_std[0],
+                "CG_EGA_BE_hypo": cg_ega_std[1],
+                "CG_EGA_EP_hypo": cg_ega_std[2],
+                "CG_EGA_AP_eu": cg_ega_std[3],
+                "CG_EGA_BE_eu": cg_ega_std[4],
+                "CG_EGA_EP_eu": cg_ega_std[5],
+                "CG_EGA_AP_hyper": cg_ega_std[6],
+                "CG_EGA_BE_hyper": cg_ega_std[7],
+                "CG_EGA_EP_hyper": cg_ega_std[8],
+            }
+            
+            return mean, std
+        else:
+            score = {
+                "RMSE": rmse_score,
+                "MAPE": mape_score,
+                "MASE": mase_score,
+                "TG": tg_score,
+                "CG_EGA_AP_hypo": cg_ega_score[:,0],
+                "CG_EGA_BE_hypo": cg_ega_score[:,1],
+                "CG_EGA_EP_hypo": cg_ega_score[:,2],
+                "CG_EGA_AP_eu": cg_ega_score[:,3],
+                "CG_EGA_BE_eu": cg_ega_score[:,4],
+                "CG_EGA_EP_eu": cg_ega_score[:,5],
+                "CG_EGA_AP_hyper": cg_ega_score[:,6],
+                "CG_EGA_BE_hyper": cg_ega_score[:,7],
+                "CG_EGA_EP_hyper": cg_ega_score[:,8],
+            }
+            
+            return score
     def plot(self, day_number=0):
         """
         Plot a given day

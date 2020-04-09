@@ -47,7 +47,7 @@ def preprocessing_t1dms(dataset, subject, ph, hist, day_len, n_days_test):
     T1DMS dataset preprocessing pipeline (valid for adult, adolescents and children):
     loading -> samples creation -> splitting -> standardization
 
-    :param dataset: name of the dataset, e.g. "t1dms_adult"
+    :param dataset: name of the dataset, e.g. "t1dms"
     :param subject: id of the subject, e.g. "1"
     :param ph: prediction horizon, e.g. 30
     :param hist: history length, e.g. 60
@@ -91,7 +91,8 @@ def preprocessing_idiab(dataset, subject, ph, hist, day_len, n_days_test):
 
 
 preprocessing_per_dataset = {
-    "t1dms_adult": preprocessing_t1dms,
+    "t1dms": preprocessing_t1dms,
+    "t1dms": preprocessing_t1dms,
     "t1dms_adolescent": preprocessing_t1dms,
     "t1dms_child": preprocessing_t1dms,
     "ohio": preprocessing_ohio,

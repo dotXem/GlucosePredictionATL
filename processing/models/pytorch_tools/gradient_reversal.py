@@ -1,7 +1,7 @@
 import torch.nn as nn
 from torch.autograd import Function
 
-class RevGrad(Function):
+class RevGradFunction(Function):
     @staticmethod
     def forward(ctx, input_):
         ctx.save_for_backward(input_)
@@ -26,4 +26,4 @@ class RevGrad(nn.Module):
         super().__init__()
 
     def forward(self, input_):
-        return RevGrad.apply(input_)
+        return RevGradFunction.apply(input_)

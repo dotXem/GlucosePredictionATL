@@ -79,8 +79,17 @@ def fill_nans(data, day_len, n_days_test):
                         end_val = data_nan.loc[end_idx]
                         data.loc[i, g_col[isna_i - i]] = end_val
                 elif np.any(idx_diff < 0):
-                    last_val = g_i[g_i.notna()][-1]
-                    data.loc[i, g_col[isna_i - i]] = last_val
+                    # forward extrapolation
+                    if len(idx_diff) >= 2:
+                        end1, end2 = notna_idx[-2], notna_idx[-1]
+                        [end1_idx, end2_idx] = [_compute_indexes(i, _, len(data_nan)) for _ in [end1, end2]]
+                        end1_val, end2_val = data_nan.loc[end1_idx], data_nan.loc[end2_idx]
+                        rate = (end2_val - end1_val) / (end2 - end1)
+                        data.loc[i, g_col[isna_i - i]] = data_nan.loc[end1_idx] - rate * (end1 - isna_i)
+                    else:
+                        # we only have one value, so we cannot compute a rate
+                        last_val = g_i[g_i.notna()][-1]
+                        data.loc[i, g_col[isna_i - i]] = last_val
 
     return data
 

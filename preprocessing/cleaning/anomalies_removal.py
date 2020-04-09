@@ -1,5 +1,6 @@
 import numpy as np
-from tools.printd import printd
+from misc.utils import printd
+
 
 def remove_anomalies(data, anomalies_threshold=2.5, plot=False):
     data_cp = data.copy()

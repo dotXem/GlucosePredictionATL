@@ -1,4 +1,4 @@
-from tools.printd import printd
+from misc.utils import printd
 from postprocessing.features_analysis import FeaturesAnalyzer
 import argparse
 import sys

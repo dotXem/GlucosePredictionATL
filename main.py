@@ -1,8 +1,7 @@
-from tools.get_models_params import locate_model, locate_params
+from misc.utils import locate_model, locate_params, printd
 import sys
 import argparse
 import os
-from tools.printd import printd
 from misc.constants import *
 from preprocessing.preprocessing import preprocessing, preprocessing_source_multi
 from processing.cross_validation import make_predictions

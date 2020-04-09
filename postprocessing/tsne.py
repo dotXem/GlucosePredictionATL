@@ -1,4 +1,4 @@
-from tools.get_models_params import locate_params, locate_model
+from misc.utils import locate_model, locate_params
 import misc.constants
 import misc.datasets
 import os
@@ -87,8 +87,6 @@ class T_SNE(object):
     def domain_proximity_ratio(self, use_tsne=True, pca_components=50, tsne_components=2, perplexity=30,
                                learning_rate=200.0, split_source=0,
                                split_target=None):
-        # from tools.printd import printd
-        # printd("start")
         if use_tsne:
             feat, y = self.compute_tsne_features(pca_components, tsne_components, perplexity, learning_rate,
                                                  split_source, split_target)

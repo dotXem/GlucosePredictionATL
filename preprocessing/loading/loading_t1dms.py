@@ -18,7 +18,7 @@ def load_t1dms(dataset, subject, day_len):
     df.columns = ["datetime", "glucose", "CHO", "insulin"]
     df.datetime = (df.datetime % day_len).astype("float64")
     start_day = datetime.datetime.strptime("2020-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
-    day_len_ds = day_len * cs.freq / misc.datasets.datasets[dataset]["freq"]
+    day_len_ds = day_len * cs.freq / misc.datasets.datasets[dataset]["glucose_freq"]
     end_day = start_day + datetime.timedelta(days=np.float64(len(df) // day_len_ds)) - datetime.timedelta(minutes=1)
     df.datetime = pd.period_range(start_day, end_day, freq='1min').to_timestamp()
     return df

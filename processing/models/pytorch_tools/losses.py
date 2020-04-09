@@ -2,13 +2,14 @@ import torch.nn as nn
 
 
 class DALoss(nn.Module):
-    def __init__(self, lambda_):
+    def __init__(self, lambda_, weight=None):
         super().__init__()
 
         self.lambda_ = lambda_
+        self.weight = weight
 
         self.mse = nn.MSELoss()
-        self.nll = nn.NLLLoss()
+        self.nll = nn.NLLLoss(weight=weight)
 
     def forward(self, x, y):
         y_preds = x[0]

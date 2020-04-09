@@ -13,7 +13,7 @@ from .pytorch_tools.losses import DALoss
 
 class FCN(DeepPredictor):
     def fit(self, weights_file=None, tl_mode="target_training", save_file=None):
-            # get training_old data
+        # get training_old data
         x_train, y_train, t_train = self._str2dataset("train")
         x_valid, y_valid, t_valid = self._str2dataset("valid")
 
@@ -24,6 +24,9 @@ class FCN(DeepPredictor):
 
         if self.params["domain_adversarial"]:
             n_domains = int(np.max(y_train[:, 1]) + 1)
+            domains_weights = Tensor([np.sum(y_train[:, 1] == i) / len(y_train)
+                                      for i in range(int(max(y_train[:, 1])) + 1)]).cuda() \
+                if self.params["domain_weights"] else None
         else:
             n_domains = 1
 
@@ -37,7 +40,7 @@ class FCN(DeepPredictor):
             self.load_weights_from_file(weights_file)
 
         if self.params["domain_adversarial"]:
-            self.loss_func = DALoss(self.params["da_lambda"])
+            self.loss_func = DALoss(self.params["da_lambda"], domains_weights)
         else:
             self.loss_func = nn.MSELoss()
 
@@ -167,6 +170,7 @@ class FCN(DeepPredictor):
 
 
 """ TOOLS FOR BUILDING THE FCN_MODULE """
+
 
 class FCN_Encoder_Module(nn.Module):
     def __init__(self, n_in, channels, kernel_sizes, dropout):

@@ -2,7 +2,8 @@ import misc.datasets
 import misc.constants
 from postprocessing.tsne import T_SNE
 import numpy as np
-from tools.printd import printd
+from misc.utils import printd
+
 
 class FeaturesAnalyzer():
 
