@@ -49,6 +49,10 @@ def locate_params(params_name):
     return locate ("processing.models.params." + params_name + ".parameters")
 
 
+def locate_search(params_name):
+    return locate ("processing.models.params." + params_name + ".search")
+
+
 def printd(*msg):
     """
         Enhanced print function that prints the date and time of the log.

@@ -24,9 +24,14 @@ class FCN(DeepPredictor):
 
         if self.params["domain_adversarial"]:
             n_domains = int(np.max(y_train[:, 1]) + 1)
-            domains_weights = Tensor([np.sum(y_train[:, 1] == i) / len(y_train)
-                                      for i in range(int(max(y_train[:, 1])) + 1)]).cuda() \
-                if self.params["domain_weights"] else None
+            if self.params["domain_weights"]:
+                domains_weights = Tensor([np.sum(y_train[:, 1] == i) / len(y_train)
+                                          for i in range(int(max(y_train[:, 1])) + 1)])
+                domains_weights = 1 / domains_weights
+                domains_weights /= domains_weights.min()
+                domains_weights = domains_weights.cuda()
+            else:
+                domains_weights = None
         else:
             n_domains = 1
 

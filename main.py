@@ -4,7 +4,7 @@ import argparse
 import os
 from misc.constants import *
 from preprocessing.preprocessing import preprocessing, preprocessing_source_multi
-from processing.cross_validation import make_predictions
+from processing.cross_validation import make_predictions_tl
 from postprocessing.postprocessing import postprocessing
 from postprocessing.results import ResultsSubject
 
@@ -15,8 +15,8 @@ def main_target_training(source_dataset, target_dataset, target_subject, Model, 
     weights_file = None
     save_file = None
     train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f)
-    raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
-                                   tl_mode="target_training", save_file=save_file, eval_mode=eval_mode)
+    raw_results = make_predictions_tl(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
+                                      tl_mode="target_training", save_file=save_file, eval_mode=eval_mode)
 
     evaluation(raw_results, scalers, source_dataset, target_dataset, target_subject, Model, params, exp, plot, "target_training")
 
@@ -29,8 +29,8 @@ def main_source_training(source_dataset, target_dataset, target_subject, Model, 
     weights_file = None
     train, valid, test, scalers = preprocessing_source_multi(source_dataset, target_dataset, target_subject, ph_f,
                                                              hist_f, day_len_f)
-    raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
-                                   tl_mode="source_training", save_file=save_file, eval_mode=eval_mode)
+    raw_results = make_predictions_tl(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
+                                      tl_mode="source_training", save_file=save_file, eval_mode=eval_mode)
 
 
 
@@ -42,8 +42,8 @@ def main_target_global(source_dataset, target_dataset, target_subject, Model, pa
     save_file = None
     train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f)
 
-    raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
-                                   tl_mode="target_global", save_file=save_file, eval_mode=eval_mode)
+    raw_results = make_predictions_tl(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
+                                      tl_mode="target_global", save_file=save_file, eval_mode=eval_mode)
 
     evaluation(raw_results, scalers, source_dataset, target_dataset, target_subject, Model, params, exp, plot, "target_global")
 
@@ -56,8 +56,8 @@ def main_target_finetuning(source_dataset, target_dataset, target_subject, Model
     save_file = None
     train, valid, test, scalers = preprocessing(target_dataset, target_subject, ph_f, hist_f, day_len_f)
 
-    raw_results = make_predictions(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
-                                   tl_mode="target_finetuning", save_file=save_file, eval_mode=eval_mode)
+    raw_results = make_predictions_tl(target_subject, Model, params, ph_f, train, valid, test, weights_file=weights_file,
+                                      tl_mode="target_finetuning", save_file=save_file, eval_mode=eval_mode)
 
     evaluation(raw_results, scalers, source_dataset, target_dataset, target_subject, Model, params, exp, plot, "target_finetuning")
 

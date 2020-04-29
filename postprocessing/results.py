@@ -65,18 +65,16 @@ class ResultsDataset():
         mean, std = self.compute_results()
         # res = np.c_[mean, std]
         name = model_name if model_name is not None else self.model + "_" + self.experiment
-        if table == "cg_ega":
-            cg_ega_keys = ["CG_EGA_AP_hypo", "CG_EGA_BE_hypo", "CG_EGA_EP_hypo", "CG_EGA_AP_eu", "CG_EGA_BE_eu",
-                           "CG_EGA_EP_eu", "CG_EGA_AP_hyper", "CG_EGA_BE_hyper", "CG_EGA_EP_hyper"]
-            mean = [mean[k] * 100 for k in cg_ega_keys]
-            std = [std[k] * 100 for k in cg_ega_keys]
+        if table == "p_ega":
+            p_ega_keys = ["P_EGA_A+B", "P_EGA_A", "P_EGA_B", "P_EGA_C", "P_EGA_D", "P_EGA_E"]
+            mean = [mean[k] * 100 for k in p_ega_keys]
+            std = [std[k] * 100 for k in p_ega_keys]
         elif table == "acc":
-            acc_keys = ["RMSE", "MAPE", "TG"]
+            acc_keys = ["RMSE", "MAPE"]
             mean = [mean[k] for k in acc_keys]
             std = [std[k] for k in acc_keys]
 
-        str = "\\textbf{" + name + "} & " + " & ".join(
-            ["{0:.2f} $\pm$ {1:.2f}".format(mean_, std_) for mean_, std_ in zip(mean, std)]) + "\\\\"
+        str = " & ".join(["{0:.2f} \\scriptsize{{({1:.2f})}}".format(mean_, std_) for mean_, std_ in zip(mean, std)])
         print(str)
 
 
@@ -96,12 +94,10 @@ class ResultsDatasetTransfer(ResultsDataset):
         mean, std = self.compute_results()
         # res = np.c_[mean, std]
         name = model_name if model_name is not None else self.model + "_" + self.experiment
-        if table == "cg_ega":
-            pass
-            # cg_ega_keys = ["CG_EGA_AP_hypo", "CG_EGA_BE_hypo", "CG_EGA_EP_hypo", "CG_EGA_AP_eu", "CG_EGA_BE_eu",
-            #                "CG_EGA_EP_eu", "CG_EGA_AP_hyper", "CG_EGA_BE_hyper", "CG_EGA_EP_hyper"]
-            # mean = [mean[k] * 100 for k in cg_ega_keys]
-            # std = [std[k] * 100 for k in cg_ega_keys]
+        if table == "p_ega":
+            p_ega_keys = ["P_EGA_A+B", "P_EGA_A", "P_EGA_B", "P_EGA_C", "P_EGA_D", "P_EGA_E"]
+            mean = [mean[k] * 100 for k in p_ega_keys]
+            std = [std[k] * 100 for k in p_ega_keys]
         elif table == "acc":
             acc_keys = ["RMSE", "MAPE"]
             mean = [mean[k] for k in acc_keys]
@@ -214,6 +210,17 @@ class ResultsSubject():
         cg_ega_score = np.array([cg_ega.CG_EGA(res_day, self.freq).simplified() for res_day in results])
         cg_ega_mean, cg_ega_std = np.nanmean(cg_ega_score, axis=0), np.nanstd(cg_ega_score, axis=0)
 
+        p_ega_score = np.array([p_ega.P_EGA(res_day, self.freq).mean() for res_day in results])
+        p_ega_a_plus_b_score = [p_ega.P_EGA(res_day, self.freq).a_plus_b() for res_day in results]
+        p_ega_mean, p_ega_std = np.nanmean(p_ega_score, axis=0), np.nanstd(p_ega_score, axis=0)
+        p_ega_a_plus_b_mean, p_ega_a_plus_b_std = np.nanmean(p_ega_a_plus_b_score, axis=0), \
+                                                  np.nanstd(p_ega_a_plus_b_score, axis=0)
+
+        r_ega_score = np.array([r_ega.R_EGA(res_day, self.freq).mean() for res_day in results])
+        r_ega_mean, r_ega_std = np.nanmean(r_ega_score, axis=0), np.nanstd(r_ega_score, axis=0)
+        r_ega_a_plus_b_score = [r_ega.R_EGA(res_day, self.freq).a_plus_b() for res_day in results]
+        r_ega_a_plus_b_mean, r_ega_a_plus_b_std = np.nanmean(r_ega_a_plus_b_score, axis=0), \
+                                                  np.nanstd(r_ega_a_plus_b_score, axis=0)
 
         if not raw_score:
             mean = {
@@ -230,6 +237,21 @@ class ResultsSubject():
                 "CG_EGA_AP_hyper": cg_ega_mean[6],
                 "CG_EGA_BE_hyper": cg_ega_mean[7],
                 "CG_EGA_EP_hyper": cg_ega_mean[8],
+                "P_EGA_A+B": p_ega_a_plus_b_mean,
+                "P_EGA_A": p_ega_mean[0],
+                "P_EGA_B": p_ega_mean[1],
+                "P_EGA_C": p_ega_mean[2],
+                "P_EGA_D": p_ega_mean[3],
+                "P_EGA_E": p_ega_mean[4],
+                "R_EGA_A+B": r_ega_a_plus_b_mean,
+                "R_EGA_A": r_ega_mean[0],
+                "R_EGA_B": r_ega_mean[1],
+                "R_EGA_uC": r_ega_mean[2],
+                "R_EGA_lC": r_ega_mean[3],
+                "R_EGA_uD": r_ega_mean[4],
+                "R_EGA_lD": r_ega_mean[5],
+                "R_EGA_uE": r_ega_mean[6],
+                "R_EGA_lE": r_ega_mean[7],
             }
 
             std = {
@@ -246,6 +268,21 @@ class ResultsSubject():
                 "CG_EGA_AP_hyper": cg_ega_std[6],
                 "CG_EGA_BE_hyper": cg_ega_std[7],
                 "CG_EGA_EP_hyper": cg_ega_std[8],
+                "P_EGA_A+B": p_ega_a_plus_b_std,
+                "P_EGA_A": p_ega_std[0],
+                "P_EGA_B": p_ega_std[1],
+                "P_EGA_C": p_ega_std[2],
+                "P_EGA_D": p_ega_std[3],
+                "P_EGA_E": p_ega_std[4],
+                "R_EGA_A+B": r_ega_a_plus_b_std,
+                "R_EGA_A": r_ega_std[0],
+                "R_EGA_B": r_ega_std[1],
+                "R_EGA_uC": r_ega_std[2],
+                "R_EGA_lC": r_ega_std[3],
+                "R_EGA_uD": r_ega_std[4],
+                "R_EGA_lD": r_ega_std[5],
+                "R_EGA_uE": r_ega_std[6],
+                "R_EGA_lE": r_ega_std[7],
             }
             
             return mean, std
@@ -264,6 +301,21 @@ class ResultsSubject():
                 "CG_EGA_AP_hyper": cg_ega_score[:,6],
                 "CG_EGA_BE_hyper": cg_ega_score[:,7],
                 "CG_EGA_EP_hyper": cg_ega_score[:,8],
+                "P_EGA_A+B": p_ega_a_plus_b_score,
+                "P_EGA_A": p_ega_score[:,0],
+                "P_EGA_B": p_ega_score[:,1],
+                "P_EGA_C": p_ega_score[:,2],
+                "P_EGA_D": p_ega_score[:,3],
+                "P_EGA_E": p_ega_score[:,4],
+                "R_EGA_A+B": r_ega_a_plus_b_score,
+                "R_EGA_A": r_ega_score[:,0],
+                "R_EGA_B": r_ega_score[:,1],
+                "R_EGA_uC": r_ega_score[:,2],
+                "R_EGA_lC": r_ega_score[:,3],
+                "R_EGA_uD": r_ega_score[:,4],
+                "R_EGA_lD": r_ega_score[:,5],
+                "R_EGA_uE": r_ega_score[:,6],
+                "R_EGA_lE": r_ega_score[:,7],
             }
             
             return score
