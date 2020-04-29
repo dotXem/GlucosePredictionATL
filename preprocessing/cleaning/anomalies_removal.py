@@ -13,8 +13,8 @@ def remove_anomalies(data, anomalies_threshold=2.5, plot=False):
             printd("[iter {}] Number of anomalies removed : {}".format(i, len(anomalies_indexes)))
 
     if plot:
-        ax=data.plot("datetime","glucose")
-        data_cp.plot("datetime","glucose",ax=ax)
+        ax= data.plot("datetime", "glucose")
+        data_cp.plot("datetime", "glucose")
         import matplotlib.pyplot as plt
         plt.show()
 

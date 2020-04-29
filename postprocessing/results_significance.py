@@ -73,7 +73,7 @@ class ResultsSignificance:
             for subject in misc.datasets.datasets[target_dataset]["subjects"]:
                 exp_ds = source_dataset + "_2_" + target_dataset + "\\" + exp
                 results_l.append(
-                    ResultsSubject(model, exp_ds, 30, target_dataset, subject).compute_results(raw_score=True))
+                    ResultsSubject(model, exp_ds, 30, target_dataset, subject).compute_raw_results())
 
         return results_l
 

@@ -71,7 +71,7 @@ def evaluation(raw_results, scalers, source_dataset, target_dataset, target_subj
     results = ResultsSubject(Model.__name__, exp, ph, target_dataset, target_subject, params=params,
                              results=raw_results)
 
-    printd(results.compute_results())
+    printd(results.compute_mean_std_results())
     if plot:
         results.plot(0)
 

@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from postprocessing.metrics.tools.misc import reshape_results, extract_columns_from_results
-from .tools.filters import *
-from .tools.misc import _all
+from postprocessing.metrics.tools.cg_ega_tools import reshape_results, extract_columns_from_results
+from .tools.cg_ega_filters import *
+from .tools.cg_ega_tools import _all
 from .p_ega import P_EGA
 from .r_ega import R_EGA
 from misc.constants import day_len
@@ -208,18 +208,18 @@ class CG_EGA():
         ax3 = f.add_subplot(224)
 
         # prediction VS truth against time
-        ax1.plot(res["datetime"], res["y_true"], "k", label="y_true")
-        ax1.plot(res["datetime"], res["y_pred"], "--k", label="y_pred")
-        ax1.plot(ap["datetime"], ap["y_pred"], label="AP", marker="o", mec="xkcd:green", mfc="xkcd:green", ls="")
-        ax1.plot(be["datetime"], be["y_pred"], label="BE", marker="o", mec="xkcd:orange", mfc="xkcd:orange", ls="")
-        ax1.plot(ep["datetime"], ep["y_pred"], label="EP", marker="o", mec="xkcd:red", mfc="xkcd:red", ls="")
+        ax1.plot(res["datetime"], res["y_true"], "k")
+        ax1.plot(res["datetime"], res["y_pred"], "--k")
+        ax1.plot(ap["datetime"], ap["y_pred"])
+        ax1.plot(be["datetime"], be["y_pred"])
+        ax1.plot(ep["datetime"], ep["y_pred"])
         ax1.set_title("Prediction VS ground truth as a function of time")
         ax1.set_xlabel("Time (min)")
         ax1.set_ylabel("Glucose value (mg/dL)")
         ax1.legend()
 
         # P-EGA structure
-        ax2.plot([0, 400], [0, 400], "-k", linewidth=0.75)
+        ax2.plot([0, 400], [0, 400], "-k")
         ax2.plot([58.33, 400], [58.33333 * 6 / 5, 400 * 6 / 5], "-k")
         ax2.plot([0, 58.33333], [70, 70], "-k")
         ax2.plot([70, 400], [56, 320], "-k")
@@ -259,14 +259,14 @@ class CG_EGA():
         ax2.set_title("Point-Error Grid Analysis")
 
         # P-EGA data
-        ax2.plot(ap["y_true"], ap["y_pred"], label="AP", marker="o", mec="xkcd:green", mfc="xkcd:green", ls="")
-        ax2.plot(be["y_true"], be["y_pred"], label="BE", marker="o", mec="xkcd:orange", mfc="xkcd:orange", ls="")
-        ax2.plot(ep["y_true"], ep["y_pred"], label="EP", marker="o", mec="xkcd:red", mfc="xkcd:red", ls="")
+        ax2.plot(ap["y_true"], ap["y_pred"])
+        ax2.plot(be["y_true"], be["y_pred"])
+        ax2.plot(ep["y_true"], ep["y_pred"])
 
         ax2.legend()
 
         # R-EGA structure
-        ax3.plot([-4, 4], [-4, 4], "-k", linewidth=0.75)
+        ax3.plot([-4, 4], [-4, 4], "-k")
         ax3.plot([-4, -1, -1], [1, 1, 4], "-k")
         ax3.plot([-4, -3, 1, 1], [-1, -1, 3, 4], "-k")
         ax3.plot([-4, -2, 1, 2], [-2, -1, 2, 4], "-k")
@@ -292,9 +292,9 @@ class CG_EGA():
         ax3.set_title("Rate-Error Grid Analysis")
 
         # R-EGA data
-        ax3.plot(ap["dy_true"], ap["dy_pred"], label="AP", marker="o", mec="xkcd:green", mfc="xkcd:green", ls="")
-        ax3.plot(be["dy_true"], be["dy_pred"], label="BE", marker="o", mec="xkcd:orange", mfc="xkcd:orange", ls="")
-        ax3.plot(ep["dy_true"], ep["dy_pred"], label="EP", marker="o", mec="xkcd:red", mfc="xkcd:red", ls="")
+        ax3.plot(ap["dy_true"], ap["dy_pred"])
+        ax3.plot(be["dy_true"], be["dy_pred"])
+        ax3.plot(ep["dy_true"], ep["dy_pred"])
 
         ax3.legend()
 

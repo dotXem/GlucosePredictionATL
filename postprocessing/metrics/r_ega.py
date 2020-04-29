@@ -1,6 +1,6 @@
 import numpy as np
-from postprocessing.metrics.tools.misc import reshape_results, extract_columns_from_results
-from .tools.misc import _all, _any
+from postprocessing.metrics.tools.cg_ega_tools import reshape_results, extract_columns_from_results
+from .tools.cg_ega_tools import _all, _any
 
 
 class R_EGA():

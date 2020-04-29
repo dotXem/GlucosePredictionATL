@@ -40,7 +40,7 @@ def main(dataset, subject, model, params, exp, mode, log, ph, plot):
 
     """ EVALUATION """
     results = ResultsSubject(model, exp, ph, dataset, subject, params=params, results=raw_results)
-    printd(results.compute_results())
+    printd(results.compute_mean_std_results())
     if plot:
         results.plot(0)
 
