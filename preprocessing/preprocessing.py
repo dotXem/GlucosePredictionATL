@@ -14,7 +14,6 @@ from preprocessing.splitting import split
 from preprocessing.standardization import standardize
 from .cleaning.last_day_removal import remove_last_day
 from .cleaning.anomalies_removal import remove_anomalies
-from .data_augmentation.upsampling import upsample_by_target_nan_filling
 
 
 def preprocessing_ohio(dataset, subject, ph, hist, day_len, n_days_test):
@@ -116,6 +115,20 @@ def preprocessing(target_dataset, target_subject, ph, hist, day_len):
 
 
 def preprocessing_source_multi(source_datasets, target_dataset, target_subject, ph, hist, day_len):
+    """
+    Preprocessing for multi-source training :
+    - preprocess all the subjects from the source dataset, exluding the target subject if it is from the same dataset;
+    - affect a class number to every subject;
+    - merge the training and validation sets, and set the testing set as validation;
+    - merge the sets from all the patients.
+    :param source_datasets: name of the source datasets, separated by a "+" if several (e.g., "idiab+ohio")
+    :param target_dataset: target dataset (i.e., "idiab" or "ohio")
+    :param target_subject: target subject within target dataset (e.g, "559" if target_dataset is "ohio")
+    :param ph: prediction horizon
+    :param hist: history length
+    :param day_len: length of day
+    :return:
+    """
     train_ds, valid_ds, test_ds, scalers_ds = [], [], [], []
     subject_domain = 0
     for source_dataset in source_datasets.split("+"):

@@ -1,9 +1,6 @@
 import pandas as pd
-import datetime
 from os.path import join
-import numpy as np
 import misc.constants as cs
-import misc.datasets
 
 def load_idiab(dataset, subject):
     """
