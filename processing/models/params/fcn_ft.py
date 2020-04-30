@@ -15,8 +15,8 @@ parameters = {
     # training_old
     "epochs": 2,
     "batch_size": 100,
-    "lr": 1e-4,  # 1e-3
-    "patience": 250,
+    "lr": 1e-5,  # 1e-3
+    "patience": 50,
 
     "l2": 0.0,  # 1e-2,
 

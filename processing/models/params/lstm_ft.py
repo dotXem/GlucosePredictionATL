@@ -12,7 +12,7 @@ parameters = {
     "dropout_layer":0.0,
     "epochs": 2,
     "batch_size": 50,
-    "lr": 1e-4,
+    "lr": 1e-5,
     "l2": 0.0, #1e-4,
     "patience": 50,
 }

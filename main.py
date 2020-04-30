@@ -103,16 +103,16 @@ def process_main_args(args):
         printd("target_finetuning", sbj_msg)
         main_target_finetuning(args.source_dataset, args.target_dataset, args.target_subject, Model, params,
                                args.weights, args.eval_mode, args.exp, args.plot)
-    elif args.tl_mode == "end_to_end" and args.params2 is not None:
+    elif args.tl_mode == "end_to_end" and args.params_ft is not None:
         printd("end_to_end", sbj_msg)
 
-        params2 = locate_params(args.params2)
+        params_ft = locate_params(args.params_ft)
 
         main_source_training(args.source_dataset, args.target_dataset, args.target_subject, Model, params,
                              args.weights, args.eval_mode, args.exp, args.plot)
-        main_target_global(args.source_dataset, args.target_dataset, args.target_subject, Model, params2,
+        main_target_global(args.source_dataset, args.target_dataset, args.target_subject, Model, params_ft,
                            args.weights, args.eval_mode, args.exp, args.plot)
-        main_target_finetuning(args.source_dataset, args.target_dataset, args.target_subject, Model, params2,
+        main_target_finetuning(args.source_dataset, args.target_dataset, args.target_subject, Model, params_ft,
                                args.weights, args.eval_mode, args.exp, args.plot)
 
 if __name__ == "__main__":
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     parser.add_argument("--target_subject", type=str)
     parser.add_argument("--model", type=str)
     parser.add_argument("--params", type=str)
-    parser.add_argument("--params2", type=str)
+    parser.add_argument("--params_ft", type=str)
     parser.add_argument("--weights", type=str)
     parser.add_argument("--eval_mode", type=str)
     parser.add_argument("--split", type=int)

@@ -3,7 +3,6 @@ import sys
 from abc import ABC, abstractmethod
 import pandas as pd
 import numpy as np
-from misc.constants import day_len
 
 
 class Predictor(ABC):
@@ -24,14 +23,11 @@ class Predictor(ABC):
     def predict(self, dataset):
         pass
 
-    #TODO rework description
     def _reshape(self, data):
         """
-        Reshape the training, validation and testing datasets according to the given history length and prediction horizon.
-        The goal is to compute, for every day and every split, the x and y samples.
-        len(X)=len(y)=1440; len(X[i]) = hist*3+1, len(y[i]) = 1.
-        :param data: dataset (array of pandas DataFrame) that needs to be reshaped;
-        :return: training, validation and testing sets that have been reshaped.
+        Extract (and reshape if needed, depending on the model) the time, inputs, outputs of the data samples
+        :param data: pandas DataFrame containing the samples;
+        :return: time of samples, inputs samples, outputs samples
         """
 
         t = data["datetime"]
