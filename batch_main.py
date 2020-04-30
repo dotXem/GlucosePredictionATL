@@ -3,6 +3,7 @@ from misc.datasets import datasets
 import argparse
 
 if __name__ == "__main__":
+    """ Enable the run of multiple target subjects one after the other using the main functions """
     parser = argparse.ArgumentParser()
     parser.add_argument("--tl_mode", type=str)
     parser.add_argument("--source_dataset", type=str)
@@ -10,7 +11,7 @@ if __name__ == "__main__":
     parser.add_argument("--target_subject",type=str)
     parser.add_argument("--model", type=str)
     parser.add_argument("--params", type=str)
-    parser.add_argument("--params2", type=str)
+    parser.add_argument("--params_ft", type=str)
     parser.add_argument("--weights", type=str)
     parser.add_argument("--eval_mode", type=str)
     parser.add_argument("--split", type=int)

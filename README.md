@@ -6,4 +6,4 @@ This repository contains the source code of the "Adversarial Multi-Source Transf
 
 In particular, the PyTorch implementation of a FCN implementing the multi-source adversarial training methodology and the source-model weights can be found in:
 * FCDAN: processing/models/fcn.py
-* weights: processing/models/weights/
+* weights: processing/models/weights/ (to keep the repository small, only the most usefull weights have been uploaded)

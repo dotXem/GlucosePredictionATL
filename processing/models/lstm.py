@@ -41,14 +41,6 @@ class LSTM(DeepTLPredictor):
         if self.params["domain_adversarial"]:
             [y_trues_glucose, y_trues_subject], [y_preds_glucose, y_preds_subject] = predict(self.model, ds)
             results = self._format_results_source(y_trues_glucose, y_trues_subject, y_preds_glucose, y_preds_subject, t)
-
-            # [y_trues_glucose, y_trues_subject], [y_preds_glucose, y_preds_subject] = predict(self.model, ds)
-            # y_trues_glucose, y_preds_glucose = [_.reshape(-1, 1) for _ in [y_trues_glucose, y_preds_glucose]]
-            # y_trues_subject = y_trues_subject.reshape(-1, 1)
-            # y_preds_subject = np.argmax(y_preds_subject, axis=1).reshape(-1, 1)
-            # y_true, y_pred = np.c_[y_trues_glucose, y_trues_subject], np.c_[y_preds_glucose, y_preds_subject]
-
-            # results = self._format_results_source(y_true, y_pred, t)
         else:
             y_true, y_pred = predict(self.model, ds)
             results = self._format_results(y_true, y_pred, t)
