@@ -6,6 +6,7 @@ results/
 results_old/
 tmp/
 logs/
+processing/models/weights/all_weights/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
