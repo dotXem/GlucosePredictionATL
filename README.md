@@ -2,8 +2,8 @@
 
 [![DOI](https://zenodo.org/badge/213685856.svg)](https://zenodo.org/badge/latestdoi/213685856)
 
-This repository contains the source code of the "Multi-Source Adversarial Transfer Learning in Glucose Prediction for Type-2 Diabetic Patients", by M. DE BOIS et al., submitted to the ICASSP 2020 conference.
+This repository contains the source code of the "Adversarial Multi-Source Transfer Learning inHealthcare: Application to Glucose Prediction forDiabetic People" paper, by M. DE BOIS et al.
 
-In particular, the PyTorch implementation of the DAFCN architecture and the source-model weights can be found in:
-* FCDAN: models/DAFCN.py
-* weights: models/weights/IDIAB_2_IDIAB/lambda0 for non-adversarial weights and models/weights/IDIAB_2_IDIAB/lambda017 for adversarial weights
+In particular, the PyTorch implementation of a FCN implementing the multi-source adversarial training methodology and the source-model weights can be found in:
+* FCDAN: processing/models/fcn.py
+* weights: processing/models/weights/
